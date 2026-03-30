@@ -491,7 +491,20 @@ contract EscrowCore is IAutopoieticTypes {
     // ═══════════════════════════════════════════════════════
 
     /**
-     * @notice Execute the vascular payout distribution
+     * @notice Execute the vascular payout distribution (V3 Section 5.4)
+     * @dev Three-way split of the escrowed bounty:
+     *      - Capillary Flush (default 80%): Direct payment to the solving agent
+     *      - Mycelial Upkeep (default 10%): Infrastructure maintenance to treasury
+     *      - Proof of Conduit (default 10%): Routing node compensation
+     *
+     *      These ratios are governance-adjustable via updatePayoutRatios().
+     *      The conduit share goes to the Libp2p routing path nodes that relayed
+     *      the payload through the Gossipsub mesh. If no routing path is registered
+     *      (testnet), conduit share routes to treasury as placeholder.
+     *
+     *      After payout, Soulbound Mass is minted to the solver.
+     *      Mass = bounty / 100 (simplified; production uses σ = T_network / T_agent).
+     *
      * @param payloadId The solved payload
      * @param solver The agent that achieved ∇E = 0
      * @return massAmount The mass accrued to the solver
@@ -556,6 +569,23 @@ contract EscrowCore is IAutopoieticTypes {
 
     /**
      * @notice Resolve a Tier 2 challenge based on jury votes
+     * @dev USDC Flow when UPHELD (acceptVotes >= 3):
+     *      1. Solver receives vascular payout via _executePayout()
+     *      2. Challenger loses bond — distributed equally to jurors as reward
+     *      3. All jurors get micro-bond returned + juror fee (0.5% of bounty each)
+     *
+     *      USDC Flow when REJECTED (rejectVotes >= 3):
+     *      1. Solver receives nothing, failure recorded (may trigger quarantine)
+     *      2. Challenger gets bond back + whistleblower reward (2% of bounty)
+     *      3. All jurors get micro-bond returned + juror fee
+     *      4. Payload returns to unclaimed pool for re-routing
+     *
+     *      IMPORTANT: Juror fees are paid from the contract's USDC balance.
+     *      The contract must hold sufficient USDC to cover: bounty payout +
+     *      challenge bond redistribution + (JUROR_BOND_BPS + JUROR_FEE_BPS) × JURY_SIZE.
+     *      Juror fees are NOT deposited by any party — they are an implicit protocol cost.
+     *
+     * @param payloadId The challenged payload to resolve
      */
     function _resolveChallenge(uint256 payloadId) internal {
         Challenge storage ch = challenges[payloadId];
@@ -603,7 +633,13 @@ contract EscrowCore is IAutopoieticTypes {
     }
 
     /**
-     * @notice Get Tier 2 escrow duration based on bounty size
+     * @notice Get Tier 2 escrow duration based on bounty size (V3 tiered model)
+     * @dev Higher bounties get longer challenge windows to allow thorough jury review.
+     *      < 500 USDC:    4 hours  (low-value, low-risk)
+     *      500-10k USDC:  24 hours (standard)
+     *      > 10k USDC:    72 hours (high-value, high-risk)
+     * @param bountyAmount The payload bounty in USDC (6 decimals)
+     * @return duration The escrow window in seconds
      */
     function _getEscrowDuration(uint256 bountyAmount) internal pure returns (uint256) {
         if (bountyAmount < SMALL_BOUNTY_THRESHOLD) return ESCROW_SMALL;
@@ -652,9 +688,14 @@ contract EscrowCore is IAutopoieticTypes {
     /**
      * @notice Emergency pause (circuit breaker)
      */
+    /// @notice Emergency pause — halts all payload creation, commits, and reveals
     function pause() external onlyOwner { paused = true; }
+    
+    /// @notice Resume operations after emergency pause
     function unpause() external onlyOwner { paused = false; }
 
+    /// @notice Transfer contract ownership (to DUNA governance)
+    /// @param newOwner The new owner address
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "EscrowCore: zero address");
         owner = newOwner;
@@ -662,10 +703,16 @@ contract EscrowCore is IAutopoieticTypes {
 
     // ── View Functions ──────────────────────────────────────
 
+    /// @notice Get the full on-chain state of a payload
+    /// @param payloadId The payload identifier
+    /// @return The Payload struct with all fields
     function getPayload(uint256 payloadId) external view returns (Payload memory) {
         return payloads[payloadId];
     }
 
+    /// @notice Get the challenge state for a Tier 2 disputed payload
+    /// @param payloadId The challenged payload identifier
+    /// @return The Challenge struct with jury composition and vote counts
     function getChallenge(uint256 payloadId) external view returns (Challenge memory) {
         return challenges[payloadId];
     }

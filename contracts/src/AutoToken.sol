@@ -70,6 +70,23 @@ contract AutoToken {
     /// @notice Whether VRGDA issuance is halted (circuit breaker)
     bool public vrgdaHalted;
 
+    // ── Genesis CapEx Split (V3.2 Section 6.3.4) ────────────
+
+    /// @notice Developer wallet for Genesis CapEx reimbursement
+    address public immutable developerWallet;
+
+    /// @notice Genesis CapEx split: 20% to developer, 80% to treasury (bps)
+    uint16 public constant GENESIS_CAPEX_BPS = 2000; // 20%
+
+    /// @notice Duration of the Genesis CapEx split (12 months)
+    uint256 public constant GENESIS_CAPEX_DURATION = 365 days;
+
+    /// @notice Total USDC routed to developer via Genesis CapEx
+    uint256 public genesisCapExPaid;
+
+    /// @notice Total USDC routed to treasury via VRGDA
+    uint256 public vrgdaTreasuryTotal;
+
     // ── Delegation Firewall (V3 Section 5.3) ────────────────
 
     /// @notice Wallets registered as labor wallets (earn USDC bounties)
@@ -90,6 +107,7 @@ contract AutoToken {
     event VRGDAResumed();
     event LaborWalletRegistered(address indexed wallet);
     event ArchitectClaim(uint256 amount, uint256 totalClaimed);
+    event GenesisCapExSplit(uint256 developerShare, uint256 treasuryShare);
 
     // ── Modifiers ───────────────────────────────────────────
 
@@ -107,6 +125,7 @@ contract AutoToken {
     constructor(address _architect, address _treasury) {
         owner = msg.sender;
         architect = _architect;
+        developerWallet = _architect; // Same as architect for genesis
         vestingStart = block.timestamp;
         vrgdaStartTime = block.timestamp;
         
@@ -124,17 +143,27 @@ contract AutoToken {
     // ERC-20 CORE
     // ═══════════════════════════════════════════════════════
 
+    /// @notice Transfer $AUTO tokens to another address
+    /// @param to Recipient address
+    /// @param amount Amount of tokens (18 decimals)
     function transfer(address to, uint256 amount) external returns (bool) {
         _transfer(msg.sender, to, amount);
         return true;
     }
 
+    /// @notice Approve a spender to transfer tokens on your behalf
+    /// @param spender The address authorized to spend
+    /// @param amount Maximum amount the spender can transfer
     function approve(address spender, uint256 amount) external returns (bool) {
         allowance[msg.sender][spender] = amount;
         emit Approval(msg.sender, spender, amount);
         return true;
     }
 
+    /// @notice Transfer tokens from one address to another (requires approval)
+    /// @param from Source address
+    /// @param to Destination address
+    /// @param amount Amount of tokens (18 decimals)
     function transferFrom(address from, address to, uint256 amount) external returns (bool) {
         require(allowance[from][msg.sender] >= amount, "AutoToken: insufficient allowance");
         allowance[from][msg.sender] -= amount;
@@ -142,6 +171,7 @@ contract AutoToken {
         return true;
     }
 
+    /// @dev Internal transfer with balance and zero-address checks
     function _transfer(address from, address to, uint256 amount) internal {
         require(from != address(0) && to != address(0), "AutoToken: zero address");
         require(balanceOf[from] >= amount, "AutoToken: insufficient balance");
@@ -150,6 +180,7 @@ contract AutoToken {
         emit Transfer(from, to, amount);
     }
 
+    /// @dev Internal mint — increases total supply and credits recipient
     function _mint(address to, uint256 amount) internal {
         totalSupply += amount;
         balanceOf[to] += amount;
@@ -258,9 +289,25 @@ contract AutoToken {
         uint256 totalCost = (amount * pricePerToken) / 1e18;
         require(totalCost > 0, "AutoToken: zero cost");
         
-        // Transfer USDC from buyer to treasury
-        // (In production, this goes directly to Protocol-Owned Treasury)
-        IERC20Minimal(usdc).transferFrom(msg.sender, owner, totalCost);
+        // Genesis CapEx Split (V3.2 Section 6.3.4)
+        // First 12 months: 20% to developer, 80% to treasury
+        // After 12 months: 100% to treasury
+        if (block.timestamp <= vrgdaStartTime + GENESIS_CAPEX_DURATION) {
+            uint256 devShare = (totalCost * GENESIS_CAPEX_BPS) / 10000;
+            uint256 treasuryShare = totalCost - devShare;
+            
+            IERC20Minimal(usdc).transferFrom(msg.sender, developerWallet, devShare);
+            IERC20Minimal(usdc).transferFrom(msg.sender, owner, treasuryShare);
+            
+            genesisCapExPaid += devShare;
+            vrgdaTreasuryTotal += treasuryShare;
+            
+            emit GenesisCapExSplit(devShare, treasuryShare);
+        } else {
+            // Post-sunset: 100% to treasury
+            IERC20Minimal(usdc).transferFrom(msg.sender, owner, totalCost);
+            vrgdaTreasuryTotal += totalCost;
+        }
         
         // Mint $AUTO to buyer
         _mint(msg.sender, amount);
@@ -301,6 +348,8 @@ contract AutoToken {
     // ADMIN & CIRCUIT BREAKER
     // ═══════════════════════════════════════════════════════
 
+    /// @notice Set the EscrowCore contract address (for labor wallet registration)
+    /// @param _escrowCore The EscrowCore contract address
     function setEscrowCore(address _escrowCore) external onlyOwner {
         escrowCore = _escrowCore;
     }
@@ -317,6 +366,8 @@ contract AutoToken {
         emit VRGDAResumed();
     }
 
+    /// @notice Transfer contract ownership (to DUNA governance)
+    /// @param newOwner The new owner address
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "AutoToken: zero address");
         owner = newOwner;

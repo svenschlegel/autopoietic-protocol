@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+import "src/EscrowCore.sol";
 
 /**
  * @title IERC20
  */
-import "src/EscrowCore.sol";
 
 /**
  * @title Treasury
@@ -241,15 +241,21 @@ contract Treasury {
 
     // ── Admin ───────────────────────────────────────────────
 
+    /// @notice Set the EscrowCore contract address (authorized depositor)
+    /// @param _escrowCore The EscrowCore contract address
     function setEscrowCore(address _escrowCore) external onlyOwner {
         escrowCore = _escrowCore;
     }
 
+    /// @notice Approve a new spending category for treasury deployments
+    /// @param category keccak256 hash of the category name
     function approveCategory(bytes32 category) external onlyOwner {
         approvedCategories[category] = true;
         emit CategoryApproved(category);
     }
 
+    /// @notice Transfer contract ownership (to DUNA governance)
+    /// @param newOwner The new owner address
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "Treasury: zero address");
         owner = newOwner;
