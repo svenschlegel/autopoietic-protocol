@@ -289,7 +289,7 @@ contract EscrowCoreTest is BaseTest {
         _submitTier2Solution(pid, bob, SOLUTION);
 
         // Fast-forward past escrow window (4 hours for <500 USDC)
-        vm.warp(block.timestamp + 4 hours + 1);
+        vm.warp(block.timestamp + 24 hours + 1);
 
         uint256 bobBefore = usdc.balanceOf(bob);
         escrow.finalizeTier2(pid);

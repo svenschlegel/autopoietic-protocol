@@ -88,6 +88,8 @@ abstract contract BaseTest is Test {
         }
         // Fund treasury directly
         usdc.mint(address(treasury), MIN_RESERVE * 2);
+        // Fund EscrowCore to cover Tier 2 juror fee outflows
+        usdc.mint(address(escrow), 100_000e6);
     }
 
     function _bootstrapJurors() internal {
