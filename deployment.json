@@ -1,0 +1,9 @@
+{
+  "network": "base_sepolia",
+  "usdc": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  "soulbound_mass": "0x5ce7dF091D4d8B8085DFF214400B9870C529A1e2",
+  "treasury": "0xcc55632702779044d5d4661713acCe1880bA714d",
+  "escrow_core": "0xb070E660Dfce264025c4D6d91A1AFdbDFb2e76ee",
+  "auto_token": "0xd8E2E5ECaAAb35E274260508a490446a722AfDA4",
+  "architect": "0x68f187C160876feaB4d1F14ef429Bb448dE07bE1"
+}
