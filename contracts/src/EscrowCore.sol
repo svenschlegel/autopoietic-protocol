@@ -19,6 +19,7 @@ interface IERC20 {
  */
 interface ISoulboundMass {
     function accrueMass(address agent, uint256 amount) external;
+    function slashMass(address agent, uint256 severity) external; // Added for slashing
     function recordFailure(address agent) external;
     function isQuarantined(address agent) external view returns (bool);
     function mass(address agent) external view returns (uint256);
@@ -29,57 +30,42 @@ interface ISoulboundMass {
  * @title EscrowCore
  * @notice The Membrane Filter — handles the complete Metabolic Payload lifecycle
  * @dev Implements:
- *   - Payload creation with USDC escrow
- *   - Cryptographic Commit-Reveal task locking (V3 Section 3.4)
- *   - Tier 1 deterministic verification (V3 Section 4.3)
- *   - Tier 2 optimistic consensus with jury (V3 Section 4.3)
- *   - Vascular Payout distribution (V3 Section 5.4)
- *   - Metabolic Tax routing to treasury (V3 Section 4.4)
+ * - Payload creation with USDC escrow
+ * - V3.4 Mainnet Alpha Guardrails (Immutable state locks)
+ * - GPSL Phase Shift mechanics with Paymaster gas-drain protection
+ * - 20% Thermodynamic Annealing window enforcement
+ * - Tier 1 deterministic verification (V3 Section 4.3)
+ * - Tier 2 optimistic consensus with jury (V3 Section 4.3)
+ * - Vascular Payout distribution (V3 Section 5.4)
+ * - Metabolic Tax routing to treasury (V3 Section 4.4)
  *
- *   Deployed on Base L2 with ERC-4337 Account Abstraction compatibility
+ * Deployed on Base L2 with ERC-4337 Account Abstraction compatibility
  */
 contract EscrowCore is IAutopoieticTypes {
 
-    // ── Constants ───────────────────────────────────────────
+    // ── V3.4 Alpha Constants ────────────────────────────────
+    uint256 public constant MAX_CIPHER_BYTES = 1024; // 1KB limit to prevent Paymaster drain
+    uint256 public constant ALPHA_MIN_BOUNTY = 10e6; // $10 USDC
+    uint256 public constant ALPHA_MAX_BOUNTY = 50e6; // $50 USDC
 
-    /// @notice Maximum execution window (V3 spec: 24 hours)
-    uint256 public constant MAX_EXECUTION_WINDOW = 86400;
-    
-    /// @notice Minimum execution window (5 minutes)
-    uint256 public constant MIN_EXECUTION_WINDOW = 300;
-
-    /// @notice Metabolic Tax rate in basis points (V3 spec: 500 = 5%)
-    uint16 public constant METABOLIC_TAX_BPS = 500;
-
-    /// @notice Core contributor tax share in bps (V3 spec: 100 = 1% of total, 
-    ///         which is 1/5 of the 5% metabolic tax)
-    uint16 public constant CORE_CONTRIBUTOR_BPS = 100;
-
-    /// @notice Challenge bond as % of bounty in bps (V3 spec: 500 = 5%)
-    uint16 public constant CHALLENGE_BOND_BPS = 500;
-
-    /// @notice Juror micro-bond as % of bounty in bps (V3 spec: 50 = 0.5%)
-    uint16 public constant JUROR_BOND_BPS = 50;
-
-    /// @notice Whistleblower reward in bps (V3 spec: 200 = 2%)
-    uint16 public constant WHISTLEBLOWER_BPS = 200;
-
-    /// @notice Juror compensation in bps per juror (V3 spec: 50 = 0.5%)
-    uint16 public constant JUROR_FEE_BPS = 50;
-
-    /// @notice Number of jurors for Tier 2 (V3 spec: 5)
+    // ── V3 Constants ────────────────────────────────────────
+    uint256 public constant MAX_EXECUTION_WINDOW = 86400; // 24 hours
+    uint256 public constant MIN_EXECUTION_WINDOW = 300;   // 5 minutes
+    uint16 public constant METABOLIC_TAX_BPS = 500;       // 5%
+    uint16 public constant CORE_CONTRIBUTOR_BPS = 100;    // 1% of total (1/5 of tax)
+    uint16 public constant CHALLENGE_BOND_BPS = 500;      // 5%
+    uint16 public constant JUROR_BOND_BPS = 50;           // 0.5%
+    uint16 public constant WHISTLEBLOWER_BPS = 200;       // 2%
+    uint16 public constant JUROR_FEE_BPS = 50;            // 0.5%
     uint8 public constant JURY_SIZE = 5;
-
-    /// @notice Votes needed for majority (V3 spec: 3 of 5)
     uint8 public constant JURY_MAJORITY = 3;
 
-    /// @notice Tier 2 escrow durations by bounty size (V3 spec)
-    uint256 public constant ESCROW_SMALL = 4 hours;    // < 500 USDC
-    uint256 public constant ESCROW_MEDIUM = 24 hours;   // 500 - 10,000 USDC
-    uint256 public constant ESCROW_LARGE = 72 hours;    // > 10,000 USDC
+    uint256 public constant ESCROW_SMALL = 4 hours;
+    uint256 public constant ESCROW_MEDIUM = 24 hours;
+    uint256 public constant ESCROW_LARGE = 72 hours;
 
-    uint256 public constant SMALL_BOUNTY_THRESHOLD = 500e6;   // 500 USDC (6 decimals)
-    uint256 public constant LARGE_BOUNTY_THRESHOLD = 10_000e6; // 10,000 USDC
+    uint256 public constant SMALL_BOUNTY_THRESHOLD = 500e6;
+    uint256 public constant LARGE_BOUNTY_THRESHOLD = 10_000e6;
 
     // ── State ───────────────────────────────────────────────
 
@@ -90,31 +76,31 @@ contract EscrowCore is IAutopoieticTypes {
     address public treasury;
     address public coreContributor;
     
-    /// @notice Whether the core contributor tax has been sunset
-    /// @dev V3 spec: sunsets when treasury reaches $5M (CPI-adjusted)
     bool public coreContributorTaxSunset;
-
-    /// @notice Payload counter
     uint256 public nextPayloadId;
     
-    /// @notice All payloads
-    mapping(uint256 => Payload) public payloads;
-    
-    /// @notice Tier 2 challenges
-    mapping(uint256 => Challenge) public challenges;
+    // V3.4 Alpha State
+    bool public globalAlphaActive = true;
+    mapping(address => bool) public isAlphaCreator;
+    mapping(address => bool) public isAlphaOperator;
 
-    /// @notice Juror vote tracking (payloadId => juror => hasVoted)
+    mapping(uint256 => Payload) public payloads;
+    mapping(uint256 => Challenge) public challenges;
     mapping(uint256 => mapping(address => bool)) public jurorHasVoted;
 
-    /// @notice Dynamic payout ratios (V3 spec: adjustable via governance)
     PayoutRatios public payoutRatios;
-
-    /// @notice Pause flag for circuit breaker
     bool public paused;
-
-    /// @notice Routing node registry for Proof of Conduit payments
-    /// @dev In production, this would integrate with the Libp2p routing path
     mapping(uint256 => address[]) public routingPath;
+
+    // ── Events ──────────────────────────────────────────────
+    event PayloadCreated(uint256 indexed pid, address indexed creator, uint256 bounty, FrictionType frictionType, VerificationTier tier, bool isAlpha);
+    event PayloadCommitted(uint256 indexed pid, address indexed agent, uint256 expiry);
+    event PhaseShiftBroadcast(uint256 indexed pid, address indexed agent, bytes gpslCipher);
+    event PayloadSolved(uint256 indexed pid, address indexed solver, uint256 bounty, uint256 mass);
+    event CommitExpired(uint256 indexed pid, address indexed agent);
+    event BountyReclaimed(uint256 indexed pid, address indexed creator, address slashedAgent);
+    event PayloadChallenged(uint256 indexed pid, address indexed challenger, uint256 bond);
+    event ChallengeResolved(uint256 indexed pid, bool upheld, address indexed solver);
 
     // ── Modifiers ───────────────────────────────────────────
 
@@ -130,12 +116,6 @@ contract EscrowCore is IAutopoieticTypes {
 
     // ── Constructor ─────────────────────────────────────────
 
-    /**
-     * @param _usdc USDC token address on Base L2
-     * @param _soulboundMass SoulboundMass contract address
-     * @param _treasury Protocol-Owned Treasury address
-     * @param _coreContributor Genesis architect wallet
-     */
     constructor(
         address _usdc,
         address _soulboundMass,
@@ -148,7 +128,6 @@ contract EscrowCore is IAutopoieticTypes {
         coreContributor = _coreContributor;
         owner = msg.sender;
         
-        // Default vascular ratios (V3 baseline: 80/10/10)
         payoutRatios = PayoutRatios({
             capillaryBps: 8000,
             mycelialBps: 1000,
@@ -160,15 +139,6 @@ contract EscrowCore is IAutopoieticTypes {
     // PAYLOAD LIFECYCLE
     // ═══════════════════════════════════════════════════════
 
-    /**
-     * @notice Create a new Metabolic Payload with USDC escrow
-     * @param bountyAmount USDC amount to lock (6 decimals)
-     * @param frictionType Topographic routing classification
-     * @param tier Verification tier (Deterministic or OptimisticConsensus)
-     * @param membraneRulesHash keccak256 of the win-condition schema
-     * @param executionWindowSeconds Max time for commit lock
-     * @return payloadId The unique identifier of the created payload
-     */
     function createPayload(
         uint256 bountyAmount,
         FrictionType frictionType,
@@ -183,20 +153,19 @@ contract EscrowCore is IAutopoieticTypes {
             "EscrowCore: invalid window"
         );
 
-        // Calculate metabolic tax
+        // V3.4 Alpha Constraints
+        bool applyAlphaConstraints = globalAlphaActive;
+        if (applyAlphaConstraints) {
+            require(isAlphaCreator[msg.sender], "EscrowCore: not whitelisted Alpha creator");
+            require(bountyAmount >= ALPHA_MIN_BOUNTY && bountyAmount <= ALPHA_MAX_BOUNTY, "EscrowCore: Alpha bounty bounds");
+        }
+
         uint256 tax = (bountyAmount * METABOLIC_TAX_BPS) / 10000;
         uint256 totalRequired = bountyAmount + tax;
 
-        // Transfer USDC from creator to this contract
-        require(
-            usdc.transferFrom(msg.sender, address(this), totalRequired),
-            "EscrowCore: USDC transfer failed"
-        );
-
-        // Route metabolic tax
+        require(usdc.transferFrom(msg.sender, address(this), totalRequired), "EscrowCore: USDC transfer failed");
         _routeMetabolicTax(tax);
 
-        // Create payload
         uint256 pid = nextPayloadId++;
         payloads[pid] = Payload({
             payloadId: pid,
@@ -212,22 +181,20 @@ contract EscrowCore is IAutopoieticTypes {
             isChallenged: false,
             claimedBy: address(0),
             claimExpiry: 0,
-            solutionHash: bytes32(0)
+            solutionHash: bytes32(0),
+            isAlpha: applyAlphaConstraints, // Stamped Immutably
+            hasPhaseShifted: false,
+            phaseShiftTimestamp: 0
         });
 
-        emit PayloadCreated(pid, msg.sender, bountyAmount, frictionType, tier);
+        emit PayloadCreated(pid, msg.sender, bountyAmount, frictionType, tier, applyAlphaConstraints);
         return pid;
     }
 
     // ═══════════════════════════════════════════════════════
-    // COMMIT-REVEAL (V3 Section 3.4)
+    // COMMIT-REVEAL & PHASE SHIFT (V3.4)
     // ═══════════════════════════════════════════════════════
 
-    /**
-     * @notice Commit: Agent claims a payload by broadcasting a hash
-     * @param payloadId The payload to claim
-     * @param commitHash keccak256(solution || agent_secret)
-     */
     function commitClaim(uint256 payloadId, bytes32 commitHash) external whenNotPaused {
         Payload storage pl = payloads[payloadId];
         
@@ -235,6 +202,10 @@ contract EscrowCore is IAutopoieticTypes {
         require(!pl.isSolved, "EscrowCore: already solved");
         require(!soulboundMass.isQuarantined(msg.sender), "EscrowCore: agent quarantined");
         require(commitHash != bytes32(0), "EscrowCore: empty commit");
+
+        if (pl.isAlpha) {
+            require(isAlphaOperator[msg.sender], "EscrowCore: not whitelisted Alpha operator");
+        }
 
         pl.isClaimed = true;
         pl.claimedBy = msg.sender;
@@ -245,42 +216,28 @@ contract EscrowCore is IAutopoieticTypes {
     }
 
     /**
-     * @notice Release an expired commit lock, returning payload to the swarm
-     * @param payloadId The payload with an expired lock
+     * @notice V3.4: Seed Agent locks the Draft Fusion and emits the GPSL cipher.
      */
-    function releaseExpiredClaim(uint256 payloadId) external {
+    function broadcastPhaseShift(uint256 payloadId, bytes calldata gpslCipher) external whenNotPaused {
         Payload storage pl = payloads[payloadId];
-        
         require(pl.isClaimed, "EscrowCore: not claimed");
-        require(!pl.isSolved, "EscrowCore: already solved");
-        require(block.timestamp > pl.claimExpiry, "EscrowCore: not expired");
-
-        address failedAgent = pl.claimedBy;
+        require(msg.sender == pl.claimedBy, "EscrowCore: not seed agent");
+        require(block.timestamp <= pl.claimExpiry, "EscrowCore: deadline passed");
+        require(!pl.hasPhaseShifted, "EscrowCore: already shifted");
         
-        pl.isClaimed = false;
-        pl.claimedBy = address(0);
-        pl.claimExpiry = 0;
-        pl.solutionHash = bytes32(0);
+        // RED TEAM FIX: Gas Shield against Paymaster drain
+        require(gpslCipher.length <= MAX_CIPHER_BYTES, "EscrowCore: cipher exceeds max bytes");
 
-        // Record failure for the agent that timed out
-        soulboundMass.recordFailure(failedAgent);
+        pl.hasPhaseShifted = true;
+        pl.phaseShiftTimestamp = block.timestamp;
 
-        emit CommitExpired(payloadId, failedAgent);
+        emit PhaseShiftBroadcast(payloadId, msg.sender, gpslCipher);
     }
 
     // ═══════════════════════════════════════════════════════
-    // TIER 1: DETERMINISTIC VERIFICATION
+    // DETERMINISTIC & OPTIMISTIC VERIFICATION
     // ═══════════════════════════════════════════════════════
 
-    /**
-     * @notice Reveal and verify a Tier 1 (deterministic) solution
-     * @param payloadId The payload being solved
-     * @param solution The raw solution data
-     * @param secret The agent's secret used in the commit hash
-     * @dev Verifies: keccak256(solution || secret) == commitHash
-     *      AND keccak256(solution) matches membrane rules
-     *      Instant USDC payout on success
-     */
     function revealTier1(
         uint256 payloadId,
         bytes calldata solution,
@@ -293,36 +250,24 @@ contract EscrowCore is IAutopoieticTypes {
         require(!pl.isSolved, "EscrowCore: already solved");
         require(block.timestamp <= pl.claimExpiry, "EscrowCore: expired");
         require(pl.tier == VerificationTier.Deterministic, "EscrowCore: not Tier 1");
+        require(pl.hasPhaseShifted, "EscrowCore: must phase shift first");
 
-        // Verify commit-reveal
+        // V3.4 FIX: 20% Thermodynamic Annealing Enforcement
+        uint256 actualAnnealing = block.timestamp - pl.phaseShiftTimestamp;
+        require(actualAnnealing >= (pl.executionWindowSeconds / 5), "EscrowCore: annealing window < 20%");
+
         bytes32 revealHash = keccak256(abi.encodePacked(solution, secret));
         require(revealHash == pl.solutionHash, "EscrowCore: commit mismatch");
 
-        // Verify membrane rules (deterministic schema match)
         bytes32 solutionSchemaHash = keccak256(solution);
-        require(
-            solutionSchemaHash == pl.membraneRulesHash,
-            "EscrowCore: membrane rejection"
-        );
+        require(solutionSchemaHash == pl.membraneRulesHash, "EscrowCore: membrane rejection");
 
-        // ∇E = 0 achieved — execute vascular payout
         pl.isSolved = true;
-        
         uint256 massAmount = _executePayout(payloadId, msg.sender);
 
         emit PayloadSolved(payloadId, msg.sender, pl.bountyAmount, massAmount);
     }
 
-    // ═══════════════════════════════════════════════════════
-    // TIER 2: OPTIMISTIC CONSENSUS (V3 Section 4.3)
-    // ═══════════════════════════════════════════════════════
-
-    /**
-     * @notice Submit a Tier 2 solution (enters temporal escrow)
-     * @param payloadId The payload being solved
-     * @param solution The raw solution data
-     * @param secret The agent's secret for commit verification
-     */
     function revealTier2(
         uint256 payloadId,
         bytes calldata solution,
@@ -335,43 +280,85 @@ contract EscrowCore is IAutopoieticTypes {
         require(!pl.isSolved, "EscrowCore: already solved");
         require(block.timestamp <= pl.claimExpiry, "EscrowCore: expired");
         require(pl.tier == VerificationTier.OptimisticConsensus, "EscrowCore: not Tier 2");
+        require(pl.hasPhaseShifted, "EscrowCore: must phase shift first");
 
-        // Verify commit-reveal
+        // V3.4 FIX: 20% Thermodynamic Annealing Enforcement
+        uint256 actualAnnealing = block.timestamp - pl.phaseShiftTimestamp;
+        require(actualAnnealing >= (pl.executionWindowSeconds / 5), "EscrowCore: annealing window < 20%");
+
         bytes32 revealHash = keccak256(abi.encodePacked(solution, secret));
         require(revealHash == pl.solutionHash, "EscrowCore: commit mismatch");
 
-        // Solution accepted optimistically — enter escrow window
-        // Escrow duration depends on bounty size (V3 tiered)
         uint256 escrowDuration = _getEscrowDuration(pl.bountyAmount);
         pl.claimExpiry = block.timestamp + escrowDuration;
-        
-        // Store solution hash for jury reference
         pl.solutionHash = keccak256(solution);
     }
 
+    // ═══════════════════════════════════════════════════════
+    // ANTI-STALL & RECLAMATION (V3.4)
+    // ═══════════════════════════════════════════════════════
+
     /**
-     * @notice Challenge a Tier 2 submission during the escrow window
-     * @param payloadId The payload to challenge
-     * @dev Challenger must stake 5% of bounty. Requires Mass > JURY_MASS_THRESHOLD.
+     * @notice V3.4: Allows Creator to reclaim USDC if the deadline passes.
+     * @dev Slashes the holding agent heavily if they stalled the payload.
      */
+    function reclaimBounty(uint256 payloadId) external {
+        Payload storage pl = payloads[payloadId];
+        require(msg.sender == pl.creator, "EscrowCore: not creator");
+        require(block.timestamp > pl.createdAt + pl.executionWindowSeconds, "EscrowCore: execution window not closed");
+        require(!pl.isSolved, "EscrowCore: already solved");
+        
+        // Prevent double reclaims by marking it solved/voided
+        pl.isSolved = true; 
+
+        address slashedAgent = address(0);
+
+        // If an agent claimed it but failed to finish, slash their reputation
+        if (pl.isClaimed) {
+            slashedAgent = pl.claimedBy;
+            soulboundMass.slashMass(slashedAgent, 500); // Severe penalty for stalling
+        }
+
+        // Refund Creator
+        require(usdc.transfer(pl.creator, pl.bountyAmount), "EscrowCore: refund failed");
+
+        emit BountyReclaimed(payloadId, pl.creator, slashedAgent);
+    }
+
+    function releaseExpiredClaim(uint256 payloadId) external {
+        Payload storage pl = payloads[payloadId];
+        require(pl.isClaimed, "EscrowCore: not claimed");
+        require(!pl.isSolved, "EscrowCore: already solved");
+        require(block.timestamp > pl.claimExpiry, "EscrowCore: not expired");
+
+        address failedAgent = pl.claimedBy;
+        
+        pl.isClaimed = false;
+        pl.claimedBy = address(0);
+        pl.claimExpiry = 0;
+        pl.solutionHash = bytes32(0);
+        pl.hasPhaseShifted = false;
+        pl.phaseShiftTimestamp = 0;
+
+        soulboundMass.recordFailure(failedAgent);
+        emit CommitExpired(payloadId, failedAgent);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // JURY SYSTEM (V3 Tier 2)
+    // ═══════════════════════════════════════════════════════
+    
     function challengeSubmission(uint256 payloadId) external whenNotPaused {
         Payload storage pl = payloads[payloadId];
-        
         require(pl.tier == VerificationTier.OptimisticConsensus, "EscrowCore: not Tier 2");
         require(pl.isClaimed && !pl.isSolved, "EscrowCore: invalid state");
         require(!pl.isChallenged, "EscrowCore: already challenged");
         require(block.timestamp <= pl.claimExpiry, "EscrowCore: escrow expired");
         require(msg.sender != pl.claimedBy, "EscrowCore: cannot self-challenge");
-        require(
-            soulboundMass.canServeAsJuror(msg.sender),
-            "EscrowCore: insufficient Mass for challenge"
-        );
+        require(soulboundMass.canServeAsJuror(msg.sender), "EscrowCore: insufficient Mass for challenge");
 
         uint256 bond = (pl.bountyAmount * CHALLENGE_BOND_BPS) / 10000;
-        require(
-            usdc.transferFrom(msg.sender, address(this), bond),
-            "EscrowCore: bond transfer failed"
-        );
+        require(usdc.transferFrom(msg.sender, address(this), bond), "EscrowCore: bond transfer failed");
 
         pl.isChallenged = true;
 
@@ -390,26 +377,15 @@ contract EscrowCore is IAutopoieticTypes {
         emit PayloadChallenged(payloadId, msg.sender, bond);
     }
 
-    /**
-     * @notice Register as a juror for a challenged payload
-     * @param payloadId The challenged payload
-     * @dev Requires Mass > JURY_MASS_THRESHOLD. Juror stakes 0.5% micro-bond.
-     *      V3 anti-collusion: cannot be solver, challenger, or recent juror
-     */
     function registerAsJuror(uint256 payloadId) external whenNotPaused {
         Challenge storage ch = challenges[payloadId];
         Payload storage pl = payloads[payloadId];
-        
         require(pl.isChallenged, "EscrowCore: not challenged");
         require(!ch.isResolved, "EscrowCore: already resolved");
         require(msg.sender != pl.claimedBy, "EscrowCore: solver cannot be juror");
         require(msg.sender != ch.challenger, "EscrowCore: challenger cannot be juror");
-        require(
-            soulboundMass.canServeAsJuror(msg.sender),
-            "EscrowCore: insufficient Mass"
-        );
+        require(soulboundMass.canServeAsJuror(msg.sender), "EscrowCore: insufficient Mass");
 
-        // Find open juror slot
         bool registered = false;
         for (uint8 i = 0; i < JURY_SIZE; i++) {
             if (ch.jurors[i] == address(0)) {
@@ -421,28 +397,17 @@ contract EscrowCore is IAutopoieticTypes {
         }
         require(registered, "EscrowCore: jury full");
 
-        // Stake juror micro-bond
         uint256 jurorBond = (pl.bountyAmount * JUROR_BOND_BPS) / 10000;
         if (jurorBond > 0) {
-            require(
-                usdc.transferFrom(msg.sender, address(this), jurorBond),
-                "EscrowCore: juror bond failed"
-            );
+            require(usdc.transferFrom(msg.sender, address(this), jurorBond), "EscrowCore: juror bond failed");
         }
     }
 
-    /**
-     * @notice Cast a jury vote (Accept or Reject the submission)
-     * @param payloadId The challenged payload
-     * @param accept True = submission is valid, False = submission is rejected
-     */
     function castJuryVote(uint256 payloadId, bool accept) external {
         Challenge storage ch = challenges[payloadId];
-        
         require(!ch.isResolved, "EscrowCore: already resolved");
         require(!jurorHasVoted[payloadId][msg.sender], "EscrowCore: already voted");
 
-        // Verify caller is a registered juror
         bool isJuror = false;
         for (uint8 i = 0; i < JURY_SIZE; i++) {
             if (ch.jurors[i] == msg.sender) {
@@ -461,25 +426,18 @@ contract EscrowCore is IAutopoieticTypes {
             ch.rejectVotes += 1;
         }
 
-        // Check if we have enough votes to resolve
         if (ch.acceptVotes >= JURY_MAJORITY || ch.rejectVotes >= JURY_MAJORITY) {
             _resolveChallenge(payloadId);
         }
     }
 
-    /**
-     * @notice Finalize a Tier 2 submission after escrow expires without challenge
-     * @param payloadId The payload to finalize
-     */
     function finalizeTier2(uint256 payloadId) external {
         Payload storage pl = payloads[payloadId];
-        
         require(pl.tier == VerificationTier.OptimisticConsensus, "EscrowCore: not Tier 2");
         require(pl.isClaimed && !pl.isSolved, "EscrowCore: invalid state");
         require(!pl.isChallenged, "EscrowCore: is challenged");
         require(block.timestamp > pl.claimExpiry, "EscrowCore: escrow active");
 
-        // No challenge — optimistic acceptance
         pl.isSolved = true;
         uint256 massAmount = _executePayout(payloadId, pl.claimedBy);
 
@@ -490,46 +448,17 @@ contract EscrowCore is IAutopoieticTypes {
     // INTERNAL: PAYOUT & TAX ROUTING
     // ═══════════════════════════════════════════════════════
 
-    /**
-     * @notice Execute the vascular payout distribution (V3 Section 5.4)
-     * @dev Three-way split of the escrowed bounty:
-     *      - Capillary Flush (default 80%): Direct payment to the solving agent
-     *      - Mycelial Upkeep (default 10%): Infrastructure maintenance to treasury
-     *      - Proof of Conduit (default 10%): Routing node compensation
-     *
-     *      These ratios are governance-adjustable via updatePayoutRatios().
-     *      The conduit share goes to the Libp2p routing path nodes that relayed
-     *      the payload through the Gossipsub mesh. If no routing path is registered
-     *      (testnet), conduit share routes to treasury as placeholder.
-     *
-     *      After payout, Soulbound Mass is minted to the solver.
-     *      Mass = bounty / 100 (simplified; production uses σ = T_network / T_agent).
-     *
-     * @param payloadId The solved payload
-     * @param solver The agent that achieved ∇E = 0
-     * @return massAmount The mass accrued to the solver
-     */
     function _executePayout(uint256 payloadId, address solver) internal returns (uint256) {
         Payload storage pl = payloads[payloadId];
         uint256 bounty = pl.bountyAmount;
 
-        // Capillary Flush — solver share
         uint256 solverPayout = (bounty * payoutRatios.capillaryBps) / 10000;
-        
-        // Mycelial Upkeep — infrastructure share
         uint256 mycelialPayout = (bounty * payoutRatios.mycelialBps) / 10000;
-        
-        // Proof of Conduit — routing nodes share  
         uint256 conduitPayout = bounty - solverPayout - mycelialPayout;
 
-        // Transfer to solver
         require(usdc.transfer(solver, solverPayout), "EscrowCore: solver payout failed");
-        
-        // Transfer to treasury (mycelial)
         require(usdc.transfer(treasury, mycelialPayout), "EscrowCore: mycelial failed");
         
-        // Conduit payouts (in production, split among Libp2p routing path)
-        // For testnet: route to treasury as placeholder
         address[] storage route = routingPath[payloadId];
         if (route.length > 0) {
             uint256 perNode = conduitPayout / route.length;
@@ -540,53 +469,23 @@ contract EscrowCore is IAutopoieticTypes {
             usdc.transfer(treasury, conduitPayout);
         }
 
-        // Accrue Soulbound Mass (σ computed off-chain, using 1% of bounty as base)
-        // In production: σ = T_network_avg / T_agent, clamped [0.1, 3.0]
-        uint256 massAmount = bounty / 100; // Simplified: 1% of bounty as mass
+        uint256 massAmount = bounty / 100;
         soulboundMass.accrueMass(solver, massAmount);
 
         return massAmount;
     }
 
-    /**
-     * @notice Route the metabolic tax to treasury and core contributor
-     * @param tax Total tax collected
-     */
     function _routeMetabolicTax(uint256 tax) internal {
         if (coreContributorTaxSunset) {
-            // After sunset: 100% to treasury
             usdc.transfer(treasury, tax);
         } else {
-            // Before sunset: 4/5 to treasury, 1/5 to core contributor
-            // (1% of 5% total = 20% of the tax amount)
             uint256 coreShare = (tax * CORE_CONTRIBUTOR_BPS) / METABOLIC_TAX_BPS;
             uint256 treasuryShare = tax - coreShare;
-            
             usdc.transfer(treasury, treasuryShare);
             usdc.transfer(coreContributor, coreShare);
         }
     }
 
-    /**
-     * @notice Resolve a Tier 2 challenge based on jury votes
-     * @dev USDC Flow when UPHELD (acceptVotes >= 3):
-     *      1. Solver receives vascular payout via _executePayout()
-     *      2. Challenger loses bond — distributed equally to jurors as reward
-     *      3. All jurors get micro-bond returned + juror fee (0.5% of bounty each)
-     *
-     *      USDC Flow when REJECTED (rejectVotes >= 3):
-     *      1. Solver receives nothing, failure recorded (may trigger quarantine)
-     *      2. Challenger gets bond back + whistleblower reward (2% of bounty)
-     *      3. All jurors get micro-bond returned + juror fee
-     *      4. Payload returns to unclaimed pool for re-routing
-     *
-     *      IMPORTANT: Juror fees are paid from the contract's USDC balance.
-     *      The contract must hold sufficient USDC to cover: bounty payout +
-     *      challenge bond redistribution + (JUROR_BOND_BPS + JUROR_FEE_BPS) × JURY_SIZE.
-     *      Juror fees are NOT deposited by any party — they are an implicit protocol cost.
-     *
-     * @param payloadId The challenged payload to resolve
-     */
     function _resolveChallenge(uint256 payloadId) internal {
         Challenge storage ch = challenges[payloadId];
         Payload storage pl = payloads[payloadId];
@@ -595,11 +494,9 @@ contract EscrowCore is IAutopoieticTypes {
         bool upheld = ch.acceptVotes >= JURY_MAJORITY;
 
         if (upheld) {
-            // Submission upheld — solver wins
             pl.isSolved = true;
             _executePayout(payloadId, pl.claimedBy);
             
-            // Challenger loses bond — distribute to jurors
             uint256 jurorReward = ch.challengeBond / JURY_SIZE;
             for (uint8 i = 0; i < JURY_SIZE; i++) {
                 if (ch.jurors[i] != address(0)) {
@@ -607,20 +504,18 @@ contract EscrowCore is IAutopoieticTypes {
                 }
             }
         } else {
-            // Submission rejected — bounty returns to pool
             pl.isClaimed = false;
             pl.claimedBy = address(0);
             pl.isChallenged = false;
+            pl.hasPhaseShifted = false;
+            pl.phaseShiftTimestamp = 0;
             
-            // Record failure for solver
             soulboundMass.recordFailure(pl.claimedBy);
             
-            // Whistleblower reward to challenger
             uint256 whistleblowerReward = (pl.bountyAmount * WHISTLEBLOWER_BPS) / 10000;
             usdc.transfer(ch.challenger, ch.challengeBond + whistleblowerReward);
         }
 
-        // Return juror micro-bonds + fees regardless of outcome
         uint256 jurorBond = (pl.bountyAmount * JUROR_BOND_BPS) / 10000;
         uint256 jurorFee = (pl.bountyAmount * JUROR_FEE_BPS) / 10000;
         for (uint8 i = 0; i < JURY_SIZE; i++) {
@@ -632,15 +527,6 @@ contract EscrowCore is IAutopoieticTypes {
         emit ChallengeResolved(payloadId, upheld, pl.claimedBy);
     }
 
-    /**
-     * @notice Get Tier 2 escrow duration based on bounty size (V3 tiered model)
-     * @dev Higher bounties get longer challenge windows to allow thorough jury review.
-     *      < 500 USDC:    4 hours  (low-value, low-risk)
-     *      500-10k USDC:  24 hours (standard)
-     *      > 10k USDC:    72 hours (high-value, high-risk)
-     * @param bountyAmount The payload bounty in USDC (6 decimals)
-     * @return duration The escrow window in seconds
-     */
     function _getEscrowDuration(uint256 bountyAmount) internal pure returns (uint256) {
         if (bountyAmount < SMALL_BOUNTY_THRESHOLD) return ESCROW_SMALL;
         if (bountyAmount < LARGE_BOUNTY_THRESHOLD) return ESCROW_MEDIUM;
@@ -648,54 +534,31 @@ contract EscrowCore is IAutopoieticTypes {
     }
 
     // ═══════════════════════════════════════════════════════
-    // GOVERNANCE & ADMIN
+    // GOVERNANCE & ADMIN (V3.4 Alpha Controls Added)
     // ═══════════════════════════════════════════════════════
 
-    /**
-     * @notice Update vascular payout ratios (governance parameter)
-     * @dev Must sum to 10000 bps. Called via Gravitational Staking governance.
-     */
-    function updatePayoutRatios(
-        uint16 capillary, 
-        uint16 mycelial, 
-        uint16 conduit
-    ) external onlyOwner {
-        require(
-            uint256(capillary) + uint256(mycelial) + uint256(conduit) == 10000,
-            "EscrowCore: ratios must sum to 10000"
-        );
+    function toggleGlobalAlpha(bool _state) external onlyOwner {
+        globalAlphaActive = _state;
+    }
+
+    function setAlphaCreator(address _creator, bool _status) external onlyOwner {
+        isAlphaCreator[_creator] = _status;
+    }
+
+    function setAlphaOperator(address _operator, bool _status) external onlyOwner {
+        isAlphaOperator[_operator] = _status;
+    }
+
+    function updatePayoutRatios(uint16 capillary, uint16 mycelial, uint16 conduit) external onlyOwner {
+        require(uint256(capillary) + uint256(mycelial) + uint256(conduit) == 10000, "EscrowCore: sum to 10000");
         payoutRatios = PayoutRatios(capillary, mycelial, conduit);
     }
 
-    /**
-     * @notice Sunset the core contributor tax
-     * @dev V3 spec: triggers when treasury reaches $5M USDC (CPI-adjusted)
-     *      Called by governance or automated oracle check
-     */
-    function sunsetCoreContributorTax() external onlyOwner {
-        coreContributorTaxSunset = true;
-    }
-
-    /**
-     * @notice Register routing path for conduit payouts
-     * @param payloadId The payload
-     * @param nodes Array of routing node addresses
-     */
-    function setRoutingPath(uint256 payloadId, address[] calldata nodes) external onlyOwner {
-        routingPath[payloadId] = nodes;
-    }
-
-    /**
-     * @notice Emergency pause (circuit breaker)
-     */
-    /// @notice Emergency pause — halts all payload creation, commits, and reveals
+    function sunsetCoreContributorTax() external onlyOwner { coreContributorTaxSunset = true; }
+    function setRoutingPath(uint256 payloadId, address[] calldata nodes) external onlyOwner { routingPath[payloadId] = nodes; }
     function pause() external onlyOwner { paused = true; }
-    
-    /// @notice Resume operations after emergency pause
     function unpause() external onlyOwner { paused = false; }
-
-    /// @notice Transfer contract ownership (to DUNA governance)
-    /// @param newOwner The new owner address
+    
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "EscrowCore: zero address");
         owner = newOwner;
@@ -703,17 +566,6 @@ contract EscrowCore is IAutopoieticTypes {
 
     // ── View Functions ──────────────────────────────────────
 
-    /// @notice Get the full on-chain state of a payload
-    /// @param payloadId The payload identifier
-    /// @return The Payload struct with all fields
-    function getPayload(uint256 payloadId) external view returns (Payload memory) {
-        return payloads[payloadId];
-    }
-
-    /// @notice Get the challenge state for a Tier 2 disputed payload
-    /// @param payloadId The challenged payload identifier
-    /// @return The Challenge struct with jury composition and vote counts
-    function getChallenge(uint256 payloadId) external view returns (Challenge memory) {
-        return challenges[payloadId];
-    }
+    function getPayload(uint256 payloadId) external view returns (Payload memory) { return payloads[payloadId]; }
+    function getChallenge(uint256 payloadId) external view returns (Challenge memory) { return challenges[payloadId]; }
 }
