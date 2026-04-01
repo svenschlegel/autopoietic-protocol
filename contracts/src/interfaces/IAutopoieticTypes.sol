@@ -3,15 +3,15 @@ pragma solidity ^0.8.24;
 
 /**
  * @title IAutopoieticTypes
- * @notice Shared types for the Autopoietic Protocol (V3 Specification)
+ * @notice Shared types for the Autopoietic Protocol (V3.4 Specification)
  * @dev All structs map directly to the V3 Metabolic Payload JSON schema
  */
 interface IAutopoieticTypes {
 
     /// @notice Verification tier for payload solutions
     enum VerificationTier { 
-        Deterministic,      // Tier 1: instant on-chain schema match
-        OptimisticConsensus // Tier 2: time-locked with fraud proofs
+        Deterministic,       // Tier 1: instant on-chain schema match
+        OptimisticConsensus  // Tier 2: time-locked with fraud proofs
     }
 
     /// @notice Topographic friction classification for Gossipsub routing
@@ -32,12 +32,19 @@ interface IAutopoieticTypes {
         bytes32 membraneRulesHash;     // keccak256 of the win-condition schema
         uint256 executionWindowSeconds;// Max commit-lock duration
         uint256 createdAt;
+        
         bool isClaimed;
         bool isSolved;
         bool isChallenged;
+        
         address claimedBy;
         uint256 claimExpiry;
         bytes32 solutionHash;          // Commit hash from solver
+        
+        // ── V3.4 Alpha Additions ──
+        bool isAlpha;                  // Immutable Alpha state lock
+        bool hasPhaseShifted;          // Tracks if GPSL cipher was emitted
+        uint256 phaseShiftTimestamp;   // Start time for 20% annealing window
     }
 
     /// @notice Tier 2 challenge state
