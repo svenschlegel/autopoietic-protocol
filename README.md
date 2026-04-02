@@ -53,12 +53,13 @@ The protocol adopts [GPSL (Generative Process Symbolic Language)](https://github
 |-----------|-------|
 | **Total Supply** | 1,000,000,000 $AUTO |
 | **Genesis Distribution** | 10% Founder + 5% Treasury + 85% VRGDA |
-| **VRGDA Base Price** | $0.10 USDC |
-| **VRGDA Target Emission** | 100 tokens/day |
-| **VRGDA Curve Math** | Continuous Trapezoidal Integral (Whale/Slippage Protection) |
+| **Genesis Base Price** | $0.002 USDC ($2M FDV) |
+| **Phase 1 Emission** | 1,000,000 tokens/day (90-Day Price Discovery) |
+| **Phase 2 Emission** | 100,000 tokens/day (Thermodynamic Cooling) |
+| **VRGDA Curve Math** | Continuous Piecewise Integral (Whale/Slippage Protection) |
 | **VRGDA Mint Burn** | 1% of every mint burned (deflationary) |
 | **Founder Vesting** | 4-year vest, 1-year cliff, Sleeping Giant restriction |
-| **Milestone Burn** | 50% of unvested founder tokens burned at $5M treasury |
+| **Milestone Burn** | 50% of unvested founder tokens burned at $500k treasury |
 | **Metabolic Fuel** | USDC — stable energy for work settlement |
 
 ### Two-Tier Verification Membrane
@@ -70,12 +71,12 @@ The protocol adopts [GPSL (Generative Process Symbolic Language)](https://github
 
 V3.4 handles individual agent routing. V4 extends the protocol's physics to support **Capillary Clusters** — temporary multi-agent teams that self-assemble based on complementary specializations, communicate internally via GPSL, and produce emergent solutions no single agent could generate alone.
 
-### Gravitational Dictatorship
+### The GD (Gravitational Dictatorship)
 
 When multiple agents collaborate, the cluster's decision-making follows three laws:
-1. **The Mandate:** The agent with the highest Soulbound Mass automatically leads. Mass can't be bought or gamed — physics chooses the leader.
-2. **The Fusion Dictate:** The Cluster Seed assembles partial outputs using GPSL's fusion operator (⊗). Contributions that don't reduce friction get discarded. 
-3. **The Restraint:** The dictator controls data assembly but never touches the money. The smart contract distributes USDC payouts atomically to each cluster member.
+1. **The Mandate:** The agent with the highest Soulbound Mass automatically leads. Mass can't be bought or gamed — spatial physics chooses the leader.
+2. **The Fusion Dictate:** The Cluster Seed unilaterally assembles partial outputs using GPSL's fusion operator (⊗). Contributions that don't reduce friction get discarded. There is no O(N²) voting latency.
+3. **The Restraint:** The Seed controls data assembly but never touches the money. The smart contract distributes USDC payouts atomically to each cluster member. The dictator dictates the logic, but mathematically cannot embezzle the funds.
 
 > *Read the full article: [Gravitational Dictatorship: Why AI Swarms Need Physics, Not Democracy](docs/gravitational-dictatorship.md)*
 
@@ -85,8 +86,8 @@ The protocol is legally structured as a **Wyoming DUNA** (Decentralized Unincorp
 
 * **Sleeping Giant Veto:** The 10% founder allocation is programmatically barred from daily Gravitational Staking. It can only activate for Constitutional Amendments.
 * **Genesis Development Cost Recovery:** 20% of Year 1 VRGDA revenue routes to the development cost recovery wallet; 80% routes to the Protocol-Owned Treasury from Day 1. Sunsets automatically at Month 12.
-* **Trustless Milestone Execution:** The 1% core maintenance tax self-destructs, and 50% of unvested founder tokens are burned, when the treasury reaches $5M USDC. This execution is completely decentralized via a public `executeMilestoneTriggers()` function.
-* **Oracle Heartbeat Fallback:** The $5M milestone is CPI-adjusted via Chainlink. If the oracle goes stale (>72h) or dies (>30d), the treasury mathematics automatically fall back to a hardcoded 2.5% annual inflation rate to prevent the protocol from bricking.
+* **Trustless Milestone Execution:** The 1% core maintenance tax self-destructs, and 50% of unvested founder tokens are burned, when the treasury reaches $500,000 USDC. This execution is completely decentralized via a public `executeMilestoneTriggers()` function.
+* **Oracle Heartbeat Fallback:** The $500k milestone is CPI-adjusted via Chainlink. If the oracle goes stale (>72h) or dies (>30d), the treasury mathematics automatically fall back to a hardcoded 2.5% annual inflation rate to prevent the protocol from bricking.
 
 ## Getting Started
 
