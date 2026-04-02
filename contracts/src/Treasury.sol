@@ -49,8 +49,8 @@ contract Treasury {
     uint256 public minimumReserve;
     uint256 public immutable genesisTimestamp;
 
-    // Base threshold in 2026 dollars (USDC 6 decimals)
-    uint256 public constant BASE_SUNSET_THRESHOLD = 5_000_000e6; 
+    // Base threshold in 2026 dollars (USDC 6 decimals) scaled for $2M FDV Genesis
+    uint256 public constant BASE_SUNSET_THRESHOLD = 500_000e6; // $500,000
     
     // Fallback constants
     uint256 public constant ORACLE_STALE_72H = 72 hours;
@@ -153,7 +153,7 @@ contract Treasury {
     // ═══════════════════════════════════════════════════════
 
     /**
-     * @notice Calculates the CPI-adjusted $5M threshold with rigorous fallback mechanisms.
+     * @notice Calculates the CPI-adjusted $500k threshold with rigorous fallback mechanisms.
      */
     function getAdjustedMilestoneThreshold() public view returns (uint256) {
         if (address(cpiOracle) == address(0)) {
@@ -190,7 +190,7 @@ contract Treasury {
     }
 
     /**
-     * @notice Applies a flat 2.5% annual inflation to the base $5M if oracle fails.
+     * @notice Applies a flat 2.5% annual inflation to the base threshold if oracle fails.
      */
     function _calculateHardcodedInflation() internal view returns (uint256) {
         uint256 yearsElapsed = (block.timestamp - genesisTimestamp) / 365 days;
@@ -233,16 +233,3 @@ contract Treasury {
     }
 
     function setOracle(address _cpiOracle) external onlyOwner {
-        cpiOracle = AggregatorV3Interface(_cpiOracle);
-    }
-
-    function approveCategory(bytes32 category) external onlyOwner {
-        approvedCategories[category] = true;
-        emit CategoryApproved(category);
-    }
-
-    function transferOwnership(address newOwner) external onlyOwner {
-        require(newOwner != address(0), "Treasury: zero address");
-        owner = newOwner;
-    }
-}
