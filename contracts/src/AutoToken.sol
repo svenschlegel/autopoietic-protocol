@@ -7,13 +7,13 @@ pragma solidity ^0.8.24;
  * @dev Implements:
  * - Standard ERC-20 for Gravitational Staking governance
  * - Total supply: 1,000,000,000 (1B) tokens
- * - Architect vesting with 1-year cliff + 3-year linear (Section 6.3)
- * - VRGDA continuous auction: 100 tokens/day target, $0.10 base (Section 4.2)
- * - 1% VRGDA Mint Burn: deflationary on every purchase (Section 6.3.4)
- * - 50% Milestone Burn: unvested architect tokens burned at $5M treasury (Section 6.3.4)
- * - 20/80 Genesis Development Cost Recovery: Year 1 VRGDA split (Section 6.3.3)
- * - Circuit breaker halting issuance when treasury is low
- * - Delegation firewall: labor wallets cannot delegate (Section 5.3)
+ * - Architect vesting with 1-year cliff + 3-year linear
+ * - Two-Phase VRGDA Emission: 90-day Price Discovery (1M/day) -> Cooling (100k/day)
+ * - $2M Genesis FDV: Base price of $0.002 USDC
+ * - 1% VRGDA Mint Burn: deflationary on every purchase
+ * - 50% Milestone Burn: unvested architect tokens burned by Treasury
+ * - 20/80 Genesis Development Cost Recovery: Year 1 VRGDA split
+ * - Delegation firewall: labor wallets cannot delegate
  *
  * $AUTO is used STRICTLY for governance (Gravitational Staking).
  * It does NOT pay for compute. Agents are paid in USDC.
@@ -58,19 +58,21 @@ contract AutoToken {
     /// @notice Tokens burned via the milestone burn event
     uint256 public milestoneBurnAmount;
 
-    // ── VRGDA State (Section 4.2) ────────────────────────────
+    // ── VRGDA State (V3.4 Price Discovery) ───────────────────
 
-    /// @notice Target tokens sold per day via VRGDA
-    uint256 public constant TARGET_PER_DAY = 100e18; // 100 tokens/day (V3.4)
+    /// @notice Phase 1: 1M tokens/day for 90 days
+    uint256 public constant DISCOVERY_RATE = 1_000_000e18; 
+    /// @notice Phase 2: 100k tokens/day thereafter (Thermodynamic Cooling)
+    uint256 public constant COOLING_RATE = 100_000e18; 
+    /// @notice Duration of the Price Discovery phase
+    uint256 public constant PHASE_SHIFT_DAYS = 90;
     
-    /// @notice VRGDA start timestamp
     uint256 public vrgdaStartTime;
-    /// @notice Total tokens sold via VRGDA (before burn)
     uint256 public vrgdaSold;
-    /// @notice Base price in USDC (6 decimals): $0.10
-    uint256 public constant BASE_PRICE = 0.1e6; // 0.10 USDC (V3.4)
+    
+    /// @notice Genesis Base Price in USDC (6 decimals): $0.002 ($2M FDV)
+    uint256 public constant BASE_PRICE = 0.002e6; 
 
-    /// @notice Whether VRGDA issuance is halted (circuit breaker)
     bool public vrgdaHalted;
 
     // ── Burn Constants (Section 6.3.4) ────────────────────────
@@ -158,20 +160,17 @@ contract AutoToken {
     // ERC-20 CORE
     // ═══════════════════════════════════════════════════════
 
-    /// @notice Transfer $AUTO tokens
     function transfer(address to, uint256 amount) external returns (bool) {
         _transfer(msg.sender, to, amount);
         return true;
     }
 
-    /// @notice Approve a spender
     function approve(address spender, uint256 amount) external returns (bool) {
         allowance[msg.sender][spender] = amount;
         emit Approval(msg.sender, spender, amount);
         return true;
     }
 
-    /// @notice Transfer tokens from another address (requires approval)
     function transferFrom(address from, address to, uint256 amount) external returns (bool) {
         require(allowance[from][msg.sender] >= amount, "AutoToken: insufficient allowance");
         allowance[from][msg.sender] -= amount;
@@ -193,7 +192,6 @@ contract AutoToken {
         emit Transfer(address(0), to, amount);
     }
 
-    /// @dev Internal burn — permanently removes tokens from circulation
     function _burn(address from, uint256 amount) internal {
         require(balanceOf[from] >= amount, "AutoToken: burn exceeds balance");
         balanceOf[from] -= amount;
@@ -207,19 +205,11 @@ contract AutoToken {
     // ARCHITECT VESTING (Section 6.3)
     // ═══════════════════════════════════════════════════════
 
-    /**
-     * @notice Calculate vested amount available to the architect
-     * @return The total amount vested (including already claimed)
-     * @dev 1-year cliff, then linear vesting over remaining 3 years.
-     * If milestone burn has executed, the effective allocation
-     * is reduced by the burned amount.
-     */
     function vestedAmount() public view returns (uint256) {
         if (block.timestamp < vestingStart + CLIFF_DURATION) {
             return 0;
         }
         
-        // Effective allocation after any milestone burn
         uint256 effectiveAllocation = architectAllocation - milestoneBurnAmount;
         uint256 elapsed = block.timestamp - vestingStart;
         if (elapsed >= VESTING_DURATION) {
@@ -229,10 +219,6 @@ contract AutoToken {
         return (effectiveAllocation * elapsed) / VESTING_DURATION;
     }
 
-    /**
-     * @notice Architect claims vested tokens
-     * @dev Transfers vested but unclaimed tokens from this contract to architect
-     */
     function claimVested() external {
         require(msg.sender == architect, "AutoToken: not architect");
         uint256 vested = vestedAmount();
@@ -246,11 +232,34 @@ contract AutoToken {
     }
 
     // ═══════════════════════════════════════════════════════
-    // VRGDA PRICING ENGINE & CONTINUOUS AUCTION (Section 4.2)
+    // VRGDA PRICING ENGINE & CONTINUOUS AUCTION
     // ═══════════════════════════════════════════════════════
 
-    /// @dev Internal pure function to calculate the exact spot price at a specific supply
-    function _priceAt(uint256 sold, uint256 targetSold) internal pure returns (uint256) {
+    /**
+     * @notice Calculates the total expected supply on a given day using the two-phase integral
+     */
+    function _getTargetSold(uint256 daysElapsed) internal pure returns (uint256) {
+        if (daysElapsed == 0) daysElapsed = 1;
+        
+        if (daysElapsed <= PHASE_SHIFT_DAYS) {
+            return daysElapsed * DISCOVERY_RATE;
+        } else {
+            uint256 discoveryTotal = PHASE_SHIFT_DAYS * DISCOVERY_RATE;
+            uint256 coolingDays = daysElapsed - PHASE_SHIFT_DAYS;
+            return discoveryTotal + (coolingDays * COOLING_RATE);
+        }
+    }
+
+    /**
+     * @notice Determines the active daily rate for penalty calculation
+     */
+    function _getCurrentRate(uint256 daysElapsed) internal pure returns (uint256) {
+        if (daysElapsed <= PHASE_SHIFT_DAYS) return DISCOVERY_RATE;
+        return COOLING_RATE;
+    }
+
+    /// @dev Internal pure function to calculate the exact spot price
+    function _priceAt(uint256 sold, uint256 targetSold, uint256 dailyRate) internal pure returns (uint256) {
         if (sold <= targetSold) {
             uint256 deficit = targetSold - sold;
             uint256 discount = (deficit * BASE_PRICE * 50) / (targetSold * 100);
@@ -258,7 +267,8 @@ contract AutoToken {
             return BASE_PRICE - discount;
         } else {
             uint256 surplus = sold - targetSold;
-            uint256 doublings = (surplus * 1e18) / TARGET_PER_DAY;
+            // The penalty scales based on the current active daily rate
+            uint256 doublings = (surplus * 1e18) / dailyRate;
             if (doublings > 8e18) doublings = 8e18; // Cap at 9x
             uint256 multiplier = 1e18 + doublings;
             return (BASE_PRICE * multiplier) / 1e18;
@@ -269,7 +279,11 @@ contract AutoToken {
     function getVRGDAPrice() public view returns (uint256) {
         uint256 daysElapsed = (block.timestamp - vrgdaStartTime) / 1 days;
         if (daysElapsed == 0) daysElapsed = 1;
-        return _priceAt(vrgdaSold, TARGET_PER_DAY * daysElapsed);
+        
+        uint256 targetSold = _getTargetSold(daysElapsed);
+        uint256 currentRate = _getCurrentRate(daysElapsed);
+        
+        return _priceAt(vrgdaSold, targetSold, currentRate);
     }
 
     /// @notice Calculates the exact continuous cost (area under the curve) for a batch purchase
@@ -278,30 +292,29 @@ contract AutoToken {
         
         uint256 daysElapsed = (block.timestamp - vrgdaStartTime) / 1 days;
         if (daysElapsed == 0) daysElapsed = 1;
-        uint256 targetSold = TARGET_PER_DAY * daysElapsed;
+        
+        uint256 targetSold = _getTargetSold(daysElapsed);
+        uint256 currentRate = _getCurrentRate(daysElapsed);
 
         uint256 startSold = vrgdaSold;
         uint256 endSold = startSold + amount;
 
         // Trapezoidal integration of the piecewise linear curve
         if (endSold <= targetSold) {
-            // Entire purchase is in the deficit (discount) zone
-            uint256 pStart = _priceAt(startSold, targetSold);
-            uint256 pEnd = _priceAt(endSold, targetSold);
+            uint256 pStart = _priceAt(startSold, targetSold, currentRate);
+            uint256 pEnd = _priceAt(endSold, targetSold, currentRate);
             return (amount * (pStart + pEnd)) / (2 * 1e18);
         } else if (startSold >= targetSold) {
-            // Entire purchase is in the surplus (premium) zone
-            uint256 pStart = _priceAt(startSold, targetSold);
-            uint256 pEnd = _priceAt(endSold, targetSold);
+            uint256 pStart = _priceAt(startSold, targetSold, currentRate);
+            uint256 pEnd = _priceAt(endSold, targetSold, currentRate);
             return (amount * (pStart + pEnd)) / (2 * 1e18);
         } else {
-            // Purchase crosses the equilibrium target (V-shaped curve)
             uint256 amountDeficit = targetSold - startSold;
             uint256 amountSurplus = endSold - targetSold;
 
-            uint256 pStart = _priceAt(startSold, targetSold);
-            uint256 pTarget = BASE_PRICE; // Price exactly at target
-            uint256 pEnd = _priceAt(endSold, targetSold);
+            uint256 pStart = _priceAt(startSold, targetSold, currentRate);
+            uint256 pTarget = BASE_PRICE; // Equilibrium
+            uint256 pEnd = _priceAt(endSold, targetSold, currentRate);
 
             uint256 costDeficit = (amountDeficit * (pStart + pTarget)) / (2 * 1e18);
             uint256 costSurplus = (amountSurplus * (pTarget + pEnd)) / (2 * 1e18);
@@ -310,37 +323,24 @@ contract AutoToken {
         }
     }
 
-    /**
-     * @notice Purchase $AUTO tokens via the VRGDA auction
-     * @param amount Number of tokens to purchase (18 decimals)
-     * @param maxPrice Maximum AVERAGE USDC price per token (slippage protection)
-     * @param usdc USDC token address for payment
-     * @dev Implements:
-     * 1. Genesis Development Cost Recovery (20/80 split, Year 1 only)
-     * 2. 1% VRGDA Mint Burn (deflationary on every purchase)
-     * For every 100 tokens purchased, 99 go to the buyer and 1 is burned.
-     */
     function purchaseVRGDA(
         uint256 amount,
         uint256 maxPrice,
         address usdc
     ) external {
-        require(!vrgdaHalted, "AutoToken: VRGDA halted (circuit breaker)");
+        require(!vrgdaHalted, "AutoToken: VRGDA halted");
         require(amount > 0, "AutoToken: zero amount");
         require(
             totalSupply + amount <= MAX_SUPPLY,
             "AutoToken: max supply reached"
         );
 
-        // Calculate integrated cost with continuous slippage enforced
         uint256 totalCost = getVRGDACost(amount);
         require(totalCost > 0, "AutoToken: zero cost");
         
-        // Ensure the average price paid doesn't exceed the user's slippage limit
         uint256 avgPrice = (totalCost * 1e18) / amount;
         require(avgPrice <= maxPrice, "AutoToken: average price exceeds maxPrice");
         
-        // ── USDC Routing: Genesis Development Cost Recovery ──
         if (block.timestamp <= vrgdaStartTime + GENESIS_RECOVERY_DURATION) {
             uint256 devShare = (totalCost * GENESIS_RECOVERY_BPS) / 10000;
             uint256 treasuryShare = totalCost - devShare;
@@ -356,14 +356,11 @@ contract AutoToken {
             vrgdaTreasuryTotal += totalCost;
         }
         
-        // ── Token Minting with 1% Burn ──
         uint256 burnAmount = (amount * MINT_BURN_BPS) / 10000;
         uint256 buyerAmount = amount - burnAmount;
         
-        // Mint to buyer (99%)
         _mint(msg.sender, buyerAmount);
         
-        // Mint and burn (1%) — increases totalBurned, reduces effective supply
         if (burnAmount > 0) {
             _mint(address(this), burnAmount);
             _burn(address(this), burnAmount);
@@ -378,25 +375,13 @@ contract AutoToken {
     // MILESTONE BURN (Section 6.3.4)
     // ═══════════════════════════════════════════════════════
 
-    /**
-     * @notice Execute the milestone burn: burn 50% of unvested architect tokens
-     * @dev Triggered exclusively by the Treasury contract when $5M CPI-adjusted target is reached.
-     * Burns tokens held in this contract (vesting), not tokens already claimed.
-     *
-     * Oracle heartbeat fallback (Section 7.5.4):
-     * - Live Chainlink CPI feed → last known value (72h stale) → 2.5% annual hardcoded (30d stale)
-     * The CPI check is performed by the calling contract (Treasury), not here.
-     */
     function executeMilestoneBurn() external {
-        // FIXED: Removed onlyOwner, restricted to the Treasury contract
         require(msg.sender == treasury, "AutoToken: only treasury can trigger");
         require(!milestoneBurnExecuted, "AutoToken: milestone already executed");
         
-        // Calculate unvested amount
         uint256 unvested = architectAllocation - vestedAmount();
         require(unvested > 0, "AutoToken: no unvested tokens");
         
-        // Burn 50% of unvested
         uint256 burnAmount = (unvested * MILESTONE_BURN_BPS) / 10000;
         
         milestoneBurnExecuted = true;
@@ -411,11 +396,6 @@ contract AutoToken {
     // DELEGATION FIREWALL (Section 5.3)
     // ═══════════════════════════════════════════════════════
 
-    /**
-     * @notice Register a wallet as a labor wallet (earns USDC bounties)
-     * @dev Labor wallets cannot participate in governance delegation.
-     * Called by EscrowCore when an agent first claims a payload.
-     */
     function registerLaborWallet(address wallet) external {
         require(
             msg.sender == escrowCore || msg.sender == owner,
@@ -425,7 +405,6 @@ contract AutoToken {
         emit LaborWalletRegistered(wallet);
     }
 
-    /// @notice Check if a wallet can participate in governance delegation
     function canDelegate(address wallet) external view returns (bool) {
         return !isLaborWallet[wallet];
     }
@@ -434,30 +413,25 @@ contract AutoToken {
     // ADMIN & CIRCUIT BREAKER
     // ═══════════════════════════════════════════════════════
 
-    /// @notice Set the EscrowCore contract address
     function setEscrowCore(address _escrowCore) external onlyOwner {
         escrowCore = _escrowCore;
     }
 
-    /// @notice Update the treasury address
     function setTreasury(address _treasury) external onlyOwner {
         require(_treasury != address(0), "AutoToken: zero address");
         treasury = _treasury;
     }
 
-    /// @notice Halt VRGDA issuance (treasury circuit breaker)
     function haltVRGDA() external onlyOwner {
         vrgdaHalted = true;
         emit VRGDAHalted();
     }
 
-    /// @notice Resume VRGDA issuance
     function resumeVRGDA() external onlyOwner {
         vrgdaHalted = false;
         emit VRGDAResumed();
     }
 
-    /// @notice Transfer contract ownership (to DUNA governance)
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "AutoToken: zero address");
         owner = newOwner;
@@ -467,22 +441,16 @@ contract AutoToken {
     // VIEW FUNCTIONS
     // ═══════════════════════════════════════════════════════
 
-    /// @notice Get the effective circulating supply (total minus burned minus vesting-locked)
     function circulatingSupply() external view returns (uint256) {
         uint256 vestingLocked = architectAllocation - architectClaimed - milestoneBurnAmount;
         return totalSupply - vestingLocked;
     }
 
-    /// @notice Get the effective max supply after all burns
     function effectiveMaxSupply() external view returns (uint256) {
         return MAX_SUPPLY - totalBurned;
     }
 }
 
-/**
- * @title IERC20Minimal
- * @notice Minimal interface for USDC transfers
- */
 interface IERC20Minimal {
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
 }
