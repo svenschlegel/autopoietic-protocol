@@ -14,7 +14,7 @@ The Autopoietic Protocol is a living architecture. Following a rigorous stress-t
 | **Emission Schedule** | Flat (100 tokens/day) | **Two-Phase (Discovery → Cooling)** |
 | **Treasury Reserve** | 5% (Undercapitalized) | **15% (Genesis Geyser)** |
 | **Drop Mechanism** | Speculative Airdrop | **Proof-of-Work (Metabolic Ignition)** |
-| **Decentralization** | $5M Milestone (Unreachable) | **$1M Milestone (Institutional Target)** |
+| **Decentralization** | $5M Milestone (Unreachable) | **$500K Milestone (CPI-Adjusted)** |
 | **Architect Sacrifice** | 0% Burn | **50% Milestone Burn (Unvested)** |
 
 ---
@@ -48,11 +48,11 @@ To prevent liquidity bottlenecks at the $2M valuation, the emission schedule fol
 
 ---
 
-## 🏛️ Governance & The $1M Milestone
+## 🏛️ Governance & The $500K Milestone
 The Autopoietic Protocol is designed to achieve **Economic Escape Velocity**.
 
 * **The Crossover Event:** As the initial $AUTO reserve is depleted through Proof-of-Work drops, the protocol transitions to funding all future expansion using its self-replenishing USDC cash flow from the 1% tax and VRGDA sales.
-* **The Decentralization Trigger:** Upon reaching **$1,000,000 USDC** in protocol-owned liquidity:
+* **The Decentralization Trigger:** Upon reaching **$500,000 USDC** (CPI-adjusted) in protocol-owned liquidity:
     1.  The 1% internal Architect tax is programmatically sunset.
     2.  **50% of the Architect's unvested governance tokens are permanently burned.**
 

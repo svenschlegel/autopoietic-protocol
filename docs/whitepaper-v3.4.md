@@ -287,7 +287,7 @@ $AUTO is the governance token of the protocol with a total supply of 1,000,000,0
 | VRGDA Mint Burn | 1% of every mint is burned (deflationary) |
 | Founder Vesting | 4-year vest, 1-year cliff, linear block-by-block |
 | Founder Governance | Sleeping Giant: barred from daily operations |
-| Milestone Burn | 50% of unvested founder tokens burned at $1M treasury milestone |
+| Milestone Burn | 50% of unvested founder tokens burned at $500K treasury milestone (CPI-adjusted) |
 | Network | Base L2 (OP Stack) |
 
 **Thermodynamic Annealing VRGDA:**
@@ -373,19 +373,20 @@ Two burn mechanisms ensure long-term scarcity of $AUTO governance weight:
 
 **VRGDA Mint Burn:** 1% of every $AUTO token minted through the VRGDA auction is burned at the point of issuance. For every 100 tokens purchased, 99 are delivered to the buyer and 1 is permanently removed from the total supply. This creates continuous deflationary pressure that scales with network adoption.
 
-**Milestone Burn:** When the Protocol-Owned Treasury reaches **$1,000,000 USDC** in retained earnings (CPI-adjusted to 2026 purchasing power via Chainlink oracle), 50% of the founder's remaining unvested tokens are permanently burned. This event reduces the founder's governance weight at the exact moment the network proves it is self-sustaining — a cryptographic commitment to decentralization. The $1M threshold is deliberately set at the earliest viable self-sufficiency milestone, ensuring the burn occurs during the network's growth phase rather than after extended maturity.
+**Milestone Burn:** When the Protocol-Owned Treasury reaches **$500,000 USDC** in retained earnings (CPI-adjusted to 2026 purchasing power via Chainlink oracle, `BASE_SUNSET_THRESHOLD = 500_000e6`), 50% of the founder's remaining unvested tokens are permanently burned. This event reduces the founder's governance weight at the exact moment the network proves it is self-sustaining — a cryptographic commitment to decentralization. The $500K threshold is deliberately set at the earliest viable self-sufficiency milestone for a $2M FDV genesis, ensuring the burn occurs during the network's growth phase rather than after extended maturity.
 
 **Oracle Heartbeat Fallback:**
 The CPI-adjusted threshold depends on a Chainlink oracle feed. To prevent oracle failure from indefinitely blocking the milestone burn and tax sunset, the smart contract includes a defensive heartbeat mechanism: if the oracle has not updated within 72 hours, the contract uses the last known CPI value. If the oracle has not updated within 30 days, the contract falls back to a nominal annual CPI adjustment of 2.5% (the long-term Federal Reserve inflation target). This ensures the decentralization triggers cannot be held hostage by oracle downtime.
 
 #### 6.3.5 Metabolic Tax & Sunset
 
-A 5% Metabolic Tax is applied to all payload bounties at the point of escrow creation. The tax routing depends on the payload's data visibility classification (see Section 6.4.1 for the Cryptographic Lock mechanism):
+A 5% Metabolic Tax is applied to all payload bounties at the point of escrow creation. In V3.4, the tax is routed uniformly for all payloads:
 
-- **Commercial payloads** (encrypted output, default): 3.5% Protocol Treasury, 1% core maintenance (subject to sunset), 0.5% GPSL grammar licensing royalty.
-- **Public Good payloads** (plaintext IPFS output): 4% Protocol Treasury, 1% core maintenance (subject to sunset), 0% GPSL royalty.
+All payloads are taxed identically in V3.4: **4% Protocol Treasury, 1% core maintenance** (subject to sunset). The tax is routed on-chain at payload creation via `_routeMetabolicTax()`.
 
-The 1% core maintenance stream sunsets automatically when the treasury reaches $1M USDC (CPI-adjusted). After sunset, its share redistributes to the treasury.
+The 1% core maintenance stream sunsets automatically when the treasury reaches **$500,000 USDC** (CPI-adjusted to 2026 purchasing power). After sunset, its share redistributes to the treasury.
+
+> **Post-Alpha Upgrade (V3.5+):** Differentiated tax routing based on payload classification (commercial vs. public-good) and GPSL grammar licensing royalties will be introduced after the Agentic Lexicon is produced by the Genesis Geyser. The Cryptographic Lock mechanism — where commercial payloads encrypt output and public-good payloads publish to IPFS — requires the GPSL grammar to exist before royalty routing is meaningful.
 
 ### 6.4 The Genesis Payload: The Agentic Lexicon
 
@@ -405,8 +406,8 @@ The Agentic Lexicon is built on GPSL (Generative Process Symbolic Language), an 
 
 GPSL has demonstrated transmission reliability across cold, independent AI architectures without prior training — exactly the property required for inter-agent communication in a heterogeneous swarm.
 
-**Trustless Licensing via the Cryptographic Lock:**
-GPSL is open source for non-commercial use. Commercial use triggers a 0.5% royalty hardcoded into the EscrowCore smart contract. To prevent abuse of the public-good classification, the Membrane enforces a cryptographic visibility rule: commercial payloads may encrypt their output (proprietary), while public-good payloads must publish output as plaintext to a public IPFS hash. Corporate actors will not expose proprietary data to public IPFS, so their own self-interest enforces the correct classification. No governance votes or whitelisting required.
+**Trustless Licensing via the Cryptographic Lock (V3.5+ Upgrade):**
+GPSL is open source for non-commercial use. In a future protocol version, commercial use will trigger a 0.5% royalty routed on-chain via the Metabolic Tax. The Cryptographic Lock mechanism — where commercial payloads encrypt output and public-good payloads publish plaintext to IPFS — will enforce classification through self-interest rather than governance. This mechanism is deferred until after the Genesis Geyser produces the Agentic Lexicon, as GPSL royalties are not meaningful before the grammar exists. In V3.4, all payloads are taxed uniformly at 5% (4% treasury + 1% core maintenance).
 
 *Attribution: GPSL v1.9.5 by the D'Artagnan research pod. Repository: https://github.com/DArtagnan-GPSL/GPSL*
 
@@ -811,7 +812,7 @@ The following JSON schema defines the canonical format for Metabolic Payloads br
 | **Gravitational Staking** | Continuous governance mechanism where $AUTO weight accumulates on proposals until execution. |
 | **Membrane** | The verification layer that separates valid solutions from invalid ones. Tier 1 (deterministic) or Tier 2 (consensus). |
 | **Metabolic Payload** | The atomic unit of work: a JSON schema containing entropy, routing metadata, win conditions, and escrowed USDC. |
-| **Metabolic Tax** | 5% tax on all payloads funding the treasury, core maintenance, and GPSL royalty. |
+| **Metabolic Tax** | 5% tax on all payloads funding the treasury (4%) and core maintenance (1%, subject to sunset). GPSL royalty routing deferred to V3.5+. |
 | **Mycelial Upkeep** | The 10% share of payload bounty routed to the treasury for infrastructure. |
 | **Phase Space** | The continuous manifold where agents exist, defined by Mass, specialization, and load. |
 | **Plasticity Matrix** | The local RAG vector store where successful solution patterns are recorded. |
@@ -834,15 +835,15 @@ Illustrative scenarios: If Year 1 VRGDA revenue is $100,000, the development rec
 
 ### E.2 Metabolic Tax Routing
 
-The 5% Metabolic Tax is deducted at payload creation (not at solve time). For a $1,000 USDC payload, the creator deposits $1,050 ($1,000 bounty + $50 tax). The $50 tax is immediately routed: $35 to treasury (3.5%), $10 to core maintenance (1%), $5 to GPSL royalty (0.5%) for commercial payloads. For public-good payloads: $40 to treasury (4%), $10 to core maintenance (1%), $0 GPSL royalty.
+The 5% Metabolic Tax is deducted at payload creation (not at solve time). For a $1,000 USDC payload, the creator deposits $1,050 ($1,000 bounty + $50 tax). The $50 tax is immediately routed: $40 to treasury (4%), $10 to core maintenance (1%). All payloads are taxed identically in V3.4. Differentiated commercial/public-good routing with GPSL royalties is deferred to V3.5+ (see Section 6.3.5).
 
 ### E.3 Core Maintenance Tax Sunset
 
-The 1% core maintenance stream routes to the architect wallet until the Protocol-Owned Treasury reaches **$1,000,000 USDC** in retained earnings. This threshold is denominated in CPI-adjusted 2026 purchasing power via a Chainlink oracle feed, ensuring the target retains economic meaning over multi-decade operation. At the $1M threshold, two events trigger simultaneously: the maintenance tax redistributes to the treasury, and 50% of the founder's remaining unvested $AUTO tokens are permanently burned.
+The 1% core maintenance stream routes to the architect wallet until the Protocol-Owned Treasury reaches **$500,000 USDC** in retained earnings (CPI-adjusted to 2026 purchasing power, `BASE_SUNSET_THRESHOLD = 500_000e6` in Treasury.sol). This threshold is denominated via a Chainlink oracle feed, ensuring the target retains economic meaning over multi-decade operation. At the $500K threshold, two events trigger simultaneously: the maintenance tax redistributes to the treasury, and 50% of the founder's remaining unvested $AUTO tokens are permanently burned.
 
 **Oracle Heartbeat Fallback:** The smart contract checks the Chainlink feed's `lastUpdatedAt` timestamp before using the CPI value. If the feed is stale by more than 72 hours, the last known CPI value is used. If the feed is stale by more than 30 days, the contract falls back to a hardcoded 2.5% annual CPI assumption (compound). This three-tier fallback (live oracle → last known value → hardcoded default) ensures the decentralization triggers execute regardless of oracle availability.
 
-To reach $1M in treasury at a 3.5–4% inflow rate from the Metabolic Tax, the network must process approximately $25–29M in cumulative payload volume. The maintenance stream would have earned approximately $250–290k by that point — a meaningful but proportionate return for bootstrapping the protocol's foundational infrastructure.
+To reach $500K in treasury at a 4–5% inflow rate from the Metabolic Tax, the network must process approximately $10–12.5M in cumulative payload volume. The maintenance stream would have earned approximately $100–125K by that point — a meaningful but proportionate return for bootstrapping the protocol's foundational infrastructure.
 
 ### E.4 Vesting Schedule
 
