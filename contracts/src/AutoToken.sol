@@ -106,6 +106,7 @@ contract AutoToken {
     // ── Access Control ──────────────────────────────────────
 
     address public owner;
+    address public emergencyAdmin; // Multisig for instant halt/resume
     address public escrowCore;
 
     // ── Events ──────────────────────────────────────────────
@@ -422,14 +423,20 @@ contract AutoToken {
         treasury = _treasury;
     }
 
-    function haltVRGDA() external onlyOwner {
+    function haltVRGDA() external {
+        require(msg.sender == owner || msg.sender == emergencyAdmin, "AutoToken: not authorized");
         vrgdaHalted = true;
         emit VRGDAHalted();
     }
 
-    function resumeVRGDA() external onlyOwner {
+    function resumeVRGDA() external {
+        require(msg.sender == owner || msg.sender == emergencyAdmin, "AutoToken: not authorized");
         vrgdaHalted = false;
         emit VRGDAResumed();
+    }
+
+    function setEmergencyAdmin(address _emergencyAdmin) external onlyOwner {
+        emergencyAdmin = _emergencyAdmin;
     }
 
     function transferOwnership(address newOwner) external onlyOwner {

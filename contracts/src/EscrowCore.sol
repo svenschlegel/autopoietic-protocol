@@ -83,6 +83,7 @@ contract EscrowCore is IAutopoieticTypes {
     ISoulboundMass public immutable soulboundMass;
     
     address public owner;
+    address public emergencyAdmin; // Multisig for instant pause/unpause
     address public treasury;
     address public coreContributor;
     
@@ -584,8 +585,17 @@ contract EscrowCore is IAutopoieticTypes {
         coreContributorTaxSunset = true;
     }
     function setRoutingPath(uint256 payloadId, address[] calldata nodes) external onlyOwner { routingPath[payloadId] = nodes; }
-    function pause() external onlyOwner { paused = true; }
-    function unpause() external onlyOwner { paused = false; }
+    function pause() external {
+        require(msg.sender == owner || msg.sender == emergencyAdmin, "EscrowCore: not authorized");
+        paused = true;
+    }
+    function unpause() external {
+        require(msg.sender == owner || msg.sender == emergencyAdmin, "EscrowCore: not authorized");
+        paused = false;
+    }
+    function setEmergencyAdmin(address _emergencyAdmin) external onlyOwner {
+        emergencyAdmin = _emergencyAdmin;
+    }
     
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "EscrowCore: zero address");

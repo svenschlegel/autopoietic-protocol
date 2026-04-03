@@ -46,6 +46,7 @@ contract Treasury {
 
     IERC20 public immutable usdc;
     address public owner;
+    address public emergencyAdmin; // Multisig for instant emergency withdraw
     
     address public escrowCore;
     address public autoToken;
@@ -252,8 +253,13 @@ contract Treasury {
         owner = newOwner;
     }
 
-    function emergencyWithdraw(address to, uint256 amount) external onlyOwner nonReentrant {
+    function emergencyWithdraw(address to, uint256 amount) external nonReentrant {
+        require(msg.sender == owner || msg.sender == emergencyAdmin, "Treasury: not authorized");
         require(usdc.transfer(to, amount), "Treasury: emergency failed");
+    }
+
+    function setEmergencyAdmin(address _emergencyAdmin) external onlyOwner {
+        emergencyAdmin = _emergencyAdmin;
     }
 
     // ── View Helpers ─────────────────────────────────────────

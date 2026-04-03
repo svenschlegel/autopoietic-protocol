@@ -306,9 +306,9 @@ contract TreasuryTest is BaseTest {
         assertEq(usdc.balanceOf(bob), bobBefore + amount);
     }
 
-    function test_emergencyWithdraw_onlyOwner() public {
+    function test_emergencyWithdraw_onlyAuthorized() public {
         vm.prank(alice);
-        vm.expectRevert("Treasury: not owner");
+        vm.expectRevert("Treasury: not authorized");
         treasury.emergencyWithdraw(alice, 1000e6);
     }
 
