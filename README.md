@@ -58,6 +58,30 @@ The Autopoietic Protocol is designed to achieve **Economic Escape Velocity**.
 
 ---
 
+## Known Assumptions & Risks
+
+### USDC Counterparty Risk (Circle Blacklisting)
+
+The protocol's economic engine runs on USDC (Circle). Circle maintains a centralized blacklist function — if they blacklist the Treasury or EscrowCore contract address, all USDC held by that contract is permanently frozen.
+
+**Treasury (mitigated):** The Treasury contract includes a `migrateBaseCurrency()` function that allows the timelocked owner to switch the accepted stablecoin (e.g., to DAI or LUSD). The emergency migration flow is:
+
+1. Multisig pauses the protocol
+2. Multisig emergency-withdraws all USDC to the Safe
+3. Multisig swaps USDC for the replacement stablecoin off-chain
+4. Multisig calls `migrateBaseCurrency(newToken)`
+5. Multisig deposits the new stablecoin and unpauses
+
+This must happen *before* the blacklist is applied. If the Treasury is already blacklisted, the USDC is unrecoverable.
+
+**EscrowCore (accepted risk):** Active escrow payloads hold USDC for short durations (minutes to 72 hours max). Migrating mid-flight escrows is unsound — it would introduce exchange rate mismatches, decimal differences, and accounting exploits. The short-lived nature of escrow deposits limits the exposure window. This risk is shared with the entire Base DeFi ecosystem.
+
+### 18-Year VRGDA Emission Timeline
+
+The VRGDA issues tokens over ~18 years at the cooling rate (100K/day). This is an intentional governance defense mechanism, not a flaw. At a $2M FDV, a fast sellout would allow hostile governance capture for under $1M. The slow emission ensures the Architect's 10% allocation acts as a stabilizing force during the protocol's most vulnerable years. Governance becomes progressively more distributed as VRGDA participants accumulate $AUTO over time.
+
+---
+
 ## 🛠️ Getting Started
 
 ### Prerequisites

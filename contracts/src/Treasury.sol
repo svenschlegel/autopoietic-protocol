@@ -44,7 +44,7 @@ contract Treasury {
 
     // ── State ───────────────────────────────────────────────
 
-    IERC20 public immutable usdc;
+    IERC20 public usdc;
     address public owner;
     address public emergencyAdmin; // Multisig for instant emergency withdraw
     
@@ -82,6 +82,7 @@ contract Treasury {
     event EcosystemExpansionTriggered(uint256 surplusAmount);
     event CategoryApproved(bytes32 indexed category);
     event MilestoneTriggersExecuted(uint256 thresholdHit);
+    event BaseCurrencyMigrated(address indexed oldToken, address indexed newToken);
     event OracleFallbackActivated(string reason, uint256 adjustedThreshold);
 
     // ── Modifiers ───────────────────────────────────────────
@@ -260,6 +261,31 @@ contract Treasury {
 
     function setEmergencyAdmin(address _emergencyAdmin) external onlyOwner {
         emergencyAdmin = _emergencyAdmin;
+    }
+
+    /**
+     * @notice Migrate the Treasury's base currency to a new ERC-20 stablecoin
+     * @param newToken The replacement stablecoin address (e.g., DAI, LUSD)
+     * @dev Emergency migration flow (executed by multisig):
+     *   1. Pause protocol (EscrowCore.pause + AutoToken.haltVRGDA)
+     *   2. emergencyWithdraw all old token to the multisig Safe
+     *   3. Swap old token for new token off-chain (e.g., Aerodrome)
+     *   4. Call migrateBaseCurrency(newToken) — this function
+     *   5. Transfer new token back into Treasury
+     *   6. Unpause protocol
+     *
+     *   Protected by onlyOwner (Timelock with 48h delay).
+     *   Does NOT migrate EscrowCore — active escrows are short-lived
+     *   and share Circle counterparty risk by design.
+     */
+    function migrateBaseCurrency(address newToken) external onlyOwner {
+        require(newToken != address(0), "Treasury: zero address");
+        require(newToken != address(usdc), "Treasury: same token");
+
+        address oldToken = address(usdc);
+        usdc = IERC20(newToken);
+
+        emit BaseCurrencyMigrated(oldToken, newToken);
     }
 
     // ── View Helpers ─────────────────────────────────────────

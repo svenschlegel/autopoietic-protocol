@@ -253,6 +253,98 @@ contract TreasuryTest is BaseTest {
     }
 
     // ═══════════════════════════════════════════════════════
+    // BASE CURRENCY MIGRATION (USDC Blacklist Defense)
+    // ═══════════════════════════════════════════════════════
+
+    function test_migrateBaseCurrency_updatesToken() public {
+        // Deploy a mock DAI as replacement
+        MockUSDC dai = new MockUSDC(); // Same interface, different address
+
+        address oldToken = address(usdc);
+
+        vm.prank(deployer);
+        treasury.migrateBaseCurrency(address(dai));
+
+        // Token pointer updated
+        assertEq(address(treasury.usdc()), address(dai));
+        assertTrue(address(treasury.usdc()) != oldToken);
+    }
+
+    function test_migrateBaseCurrency_depositsUseNewToken() public {
+        MockUSDC dai = new MockUSDC();
+
+        vm.prank(deployer);
+        treasury.migrateBaseCurrency(address(dai));
+
+        // Fund alice with DAI and deposit
+        dai.mint(alice, 50_000e6);
+        vm.startPrank(alice);
+        dai.approve(address(treasury), 50_000e6);
+        treasury.deposit(50_000e6);
+        vm.stopPrank();
+
+        // Treasury received DAI
+        assertEq(dai.balanceOf(address(treasury)), 50_000e6);
+    }
+
+    function test_migrateBaseCurrency_emitsEvent() public {
+        MockUSDC dai = new MockUSDC();
+
+        vm.prank(deployer);
+        vm.expectEmit(true, true, false, false);
+        emit Treasury.BaseCurrencyMigrated(address(usdc), address(dai));
+        treasury.migrateBaseCurrency(address(dai));
+    }
+
+    function test_migrateBaseCurrency_revertsZeroAddress() public {
+        vm.prank(deployer);
+        vm.expectRevert("Treasury: zero address");
+        treasury.migrateBaseCurrency(address(0));
+    }
+
+    function test_migrateBaseCurrency_revertsSameToken() public {
+        vm.prank(deployer);
+        vm.expectRevert("Treasury: same token");
+        treasury.migrateBaseCurrency(address(usdc));
+    }
+
+    function test_migrateBaseCurrency_onlyOwner() public {
+        MockUSDC dai = new MockUSDC();
+        vm.prank(alice);
+        vm.expectRevert("Treasury: not owner");
+        treasury.migrateBaseCurrency(address(dai));
+    }
+
+    function test_migrateBaseCurrency_fullEmergencyFlow() public {
+        // Simulate the complete emergency migration flow
+        MockUSDC dai = new MockUSDC();
+
+        uint256 treasuryBalance = usdc.balanceOf(address(treasury));
+
+        // Step 1: Emergency withdraw all USDC to deployer (acting as multisig)
+        vm.prank(deployer);
+        treasury.emergencyWithdraw(deployer, treasuryBalance);
+        assertEq(usdc.balanceOf(address(treasury)), 0);
+
+        // Step 2: Off-chain swap happens (simulated by minting DAI)
+        dai.mint(deployer, treasuryBalance);
+
+        // Step 3: Migrate base currency
+        vm.prank(deployer);
+        treasury.migrateBaseCurrency(address(dai));
+
+        // Step 4: Deposit DAI back
+        vm.startPrank(deployer);
+        dai.approve(address(treasury), treasuryBalance);
+        treasury.deposit(treasuryBalance);
+        vm.stopPrank();
+
+        // Treasury is back to full health with new token
+        assertEq(dai.balanceOf(address(treasury)), treasuryBalance);
+        assertEq(address(treasury.usdc()), address(dai));
+    }
+
+    // ═══════════════════════════════════════════════════════
     // HEALTH METRICS
     // ═══════════════════════════════════════════════════════
 
