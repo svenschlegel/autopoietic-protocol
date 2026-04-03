@@ -32,6 +32,16 @@ interface AggregatorV3Interface {
  */
 contract Treasury {
 
+    // ── Reentrancy Guard ─────────────────────────────────────
+
+    uint256 private _locked = 1;
+    modifier nonReentrant() {
+        require(_locked == 1, "Treasury: reentrant call");
+        _locked = 2;
+        _;
+        _locked = 1;
+    }
+
     // ── State ───────────────────────────────────────────────
 
     IERC20 public immutable usdc;
@@ -98,14 +108,14 @@ contract Treasury {
     // INFLOW & OUTFLOW
     // ═══════════════════════════════════════════════════════
 
-    function deposit(uint256 amount) external {
+    function deposit(uint256 amount) external nonReentrant {
         require(usdc.transferFrom(msg.sender, address(this), amount), "Treasury: deposit failed");
         totalReceived += amount;
         emit FundsReceived(msg.sender, amount);
         _checkSurplusStatus();
     }
 
-    function deploy(address to, uint256 amount, bytes32 category) external onlyOwner {
+    function deploy(address to, uint256 amount, bytes32 category) external onlyOwner nonReentrant {
         require(approvedCategories[category], "Treasury: unapproved category");
         require(usdc.balanceOf(address(this)) - amount >= minimumReserve, "Treasury: would breach minimum reserve");
 
@@ -203,7 +213,7 @@ contract Treasury {
      * @notice Checks if threshold is met and triggers external actions.
      * @dev Anyone can call this to enforce decentralization.
      */
-    function executeMilestoneTriggers() external {
+    function executeMilestoneTriggers() external nonReentrant {
         require(!milestoneTriggersExecuted, "Treasury: triggers already executed");
         require(autoToken != address(0) && escrowCore != address(0), "Treasury: addresses not set");
 
@@ -242,7 +252,7 @@ contract Treasury {
         owner = newOwner;
     }
 
-    function emergencyWithdraw(address to, uint256 amount) external onlyOwner {
+    function emergencyWithdraw(address to, uint256 amount) external onlyOwner nonReentrant {
         require(usdc.transfer(to, amount), "Treasury: emergency failed");
     }
 
