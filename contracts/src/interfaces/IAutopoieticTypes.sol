@@ -67,45 +67,7 @@ interface IAutopoieticTypes {
         uint16 conduitBps;     // Routing node share
     }
 
-    // ── Events ──────────────────────────────────────────────
-
-    event PayloadCreated(
-        uint256 indexed payloadId, 
-        address indexed creator, 
-        uint256 bountyAmount, 
-        FrictionType frictionType,
-        VerificationTier tier
-    );
-
-    event PayloadCommitted(
-        uint256 indexed payloadId, 
-        address indexed agent, 
-        uint256 claimExpiry
-    );
-
-    event PayloadSolved(
-        uint256 indexed payloadId, 
-        address indexed solver, 
-        uint256 solverPayout,
-        uint256 massAccrued
-    );
-
-    event PayloadChallenged(
-        uint256 indexed payloadId, 
-        address indexed challenger, 
-        uint256 bond
-    );
-
-    event ChallengeResolved(
-        uint256 indexed payloadId, 
-        bool upheld,
-        address indexed solver
-    );
-
-    event CommitExpired(
-        uint256 indexed payloadId, 
-        address indexed failedAgent
-    );
+    // ── SoulboundMass Events ──────────────────────────────────
 
     event AgentQuarantined(address indexed agent, uint256 consecutiveFailures);
     event MassMinted(address indexed agent, uint256 amount);

@@ -45,7 +45,7 @@ contract EscrowCoreTest is BaseTest {
             uint256 storedId,
             address creator,
             uint256 storedBounty,
-            , , , , , , , , , ,
+            , , , , , , , , , , , , ,
         ) = escrow.payloads(pid);
         assertEq(storedId, 0);
         assertEq(creator, alice);
@@ -123,7 +123,7 @@ contract EscrowCoreTest is BaseTest {
         vm.prank(bob);
         escrow.commitClaim(pid, commitHash);
 
-        (, , , , , , , , bool isClaimed, , , address claimedBy, , ) = escrow.payloads(pid);
+        (, , , , , , , , bool isClaimed, , , address claimedBy, , , , , ) = escrow.payloads(pid);
         assertTrue(isClaimed);
         assertEq(claimedBy, bob);
     }
@@ -171,7 +171,7 @@ contract EscrowCoreTest is BaseTest {
         // Anyone can release the expired claim
         escrow.releaseExpiredClaim(pid);
 
-        (, , , , , , , , bool isClaimed, , , address claimedBy, , ) = escrow.payloads(pid);
+        (, , , , , , , , bool isClaimed, , , address claimedBy, , , , , ) = escrow.payloads(pid);
         assertFalse(isClaimed);
         assertEq(claimedBy, address(0));
 
@@ -204,7 +204,7 @@ contract EscrowCoreTest is BaseTest {
         _solvePayloadTier1(pid, bob, SOLUTION);
 
         // Verify payload is solved
-        (, , , , , , , , , bool isSolved, , , , ) = escrow.payloads(pid);
+        (, , , , , , , , , bool isSolved, , , , , , , ) = escrow.payloads(pid);
         assertTrue(isSolved);
 
         // Bob should receive 80% of bounty
@@ -225,7 +225,14 @@ contract EscrowCoreTest is BaseTest {
 
         vm.startPrank(bob);
         escrow.commitClaim(pid, commitHash);
-        
+        // V3.4: must phase shift before revealing
+        escrow.broadcastPhaseShift(pid, bytes("gpsl_cipher_test"));
+        vm.stopPrank();
+
+        // V3.4: warp past 20% annealing window (3600 / 5 = 720s)
+        vm.warp(block.timestamp + 721);
+
+        vm.startPrank(bob);
         vm.expectRevert("EscrowCore: membrane rejection");
         escrow.revealTier1(pid, BAD_SOLUTION, secret);
         vm.stopPrank();
@@ -239,7 +246,14 @@ contract EscrowCoreTest is BaseTest {
 
         vm.startPrank(bob);
         escrow.commitClaim(pid, commitHash);
-        
+        // V3.4: must phase shift before revealing
+        escrow.broadcastPhaseShift(pid, bytes("gpsl_cipher_test"));
+        vm.stopPrank();
+
+        // V3.4: warp past 20% annealing window (3600 / 5 = 720s)
+        vm.warp(block.timestamp + 721);
+
+        vm.startPrank(bob);
         // Try to reveal with wrong secret
         vm.expectRevert("EscrowCore: commit mismatch");
         escrow.revealTier1(pid, SOLUTION, bytes32("wrong_secret"));
@@ -294,7 +308,7 @@ contract EscrowCoreTest is BaseTest {
         uint256 bobBefore = usdc.balanceOf(bob);
         escrow.finalizeTier2(pid);
 
-        (, , , , , , , , , bool isSolved, , , , ) = escrow.payloads(pid);
+        (, , , , , , , , , bool isSolved, , , , , , , ) = escrow.payloads(pid);
         assertTrue(isSolved);
 
         uint256 expectedPayout = (bounty * 8000) / 10000;
@@ -322,7 +336,7 @@ contract EscrowCoreTest is BaseTest {
         escrow.challengeSubmission(pid);
         vm.stopPrank();
 
-        (, , , , , , , , , , bool isChallenged, , , ) = escrow.payloads(pid);
+        (, , , , , , , , , , bool isChallenged, , , , , , ) = escrow.payloads(pid);
         assertTrue(isChallenged);
     }
 
@@ -388,7 +402,7 @@ contract EscrowCoreTest is BaseTest {
         }
 
         // Challenge should be resolved — submission upheld
-        (, , , , , , , , , bool isSolved, , , , ) = escrow.payloads(pid);
+        (, , , , , , , , , bool isSolved, , , , , , , ) = escrow.payloads(pid);
         assertTrue(isSolved);
     }
 
@@ -423,7 +437,7 @@ contract EscrowCoreTest is BaseTest {
         }
 
         // Submission rejected — payload returned to pool
-        (, , , , , , , , bool isClaimed, bool isSolved, , , , ) = escrow.payloads(pid);
+        (, , , , , , , , bool isClaimed, bool isSolved, , , , , , , ) = escrow.payloads(pid);
         assertFalse(isSolved);
 
         // Dave gets bond back + whistleblower reward
@@ -505,7 +519,7 @@ contract EscrowCoreTest is BaseTest {
 
     function test_payoutRatios_mustSumTo10000() public {
         vm.prank(deployer);
-        vm.expectRevert("EscrowCore: ratios must sum to 10000");
+        vm.expectRevert("EscrowCore: sum to 10000");
         escrow.updatePayoutRatios(7000, 1000, 1000); // = 9000, not 10000
     }
 
@@ -632,8 +646,13 @@ contract EscrowCoreTest is BaseTest {
         bytes32 secret = keccak256(abi.encodePacked("secret", bob));
         bytes32 commitHash = keccak256(abi.encodePacked(SOLUTION, secret));
 
-        vm.prank(bob);
+        vm.startPrank(bob);
         escrow.commitClaim(pid, commitHash);
+        // V3.4: phase shift required before reveal
+        escrow.broadcastPhaseShift(pid, bytes("gpsl_cipher_test"));
+        vm.stopPrank();
+
+        vm.warp(block.timestamp + 721); // past 20% annealing window
 
         vm.prank(bob);
         uint256 g = gasleft();

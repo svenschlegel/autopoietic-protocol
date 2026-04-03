@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-interface IERC20 {
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
-    function transfer(address to, uint256 amount) external returns (bool);
-    function balanceOf(address account) external view returns (uint256);
-}
+import "src/EscrowCore.sol";
 
 interface IEscrowCore {
     function sunsetCoreContributorTax() external;
@@ -233,3 +229,46 @@ contract Treasury {
     }
 
     function setOracle(address _cpiOracle) external onlyOwner {
+        cpiOracle = AggregatorV3Interface(_cpiOracle);
+    }
+
+    function approveCategory(bytes32 category) external onlyOwner {
+        approvedCategories[category] = true;
+        emit CategoryApproved(category);
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "Treasury: zero address");
+        owner = newOwner;
+    }
+
+    function emergencyWithdraw(address to, uint256 amount) external onlyOwner {
+        require(usdc.transfer(to, amount), "Treasury: emergency failed");
+    }
+
+    // ── View Helpers ─────────────────────────────────────────
+
+    function shouldSunsetCoreTax() public view returns (bool) {
+        return usdc.balanceOf(address(this)) >= getAdjustedMilestoneThreshold();
+    }
+
+    function expansionBudget() public view returns (uint256) {
+        uint256 balance = usdc.balanceOf(address(this));
+        if (balance <= minimumReserve) return 0;
+        return balance - minimumReserve;
+    }
+
+    function getHealth() external view returns (
+        uint256 balance,
+        uint256 minimum,
+        bool healthy,
+        bool expansionReady,
+        bool sunsetReady
+    ) {
+        balance = usdc.balanceOf(address(this));
+        minimum = minimumReserve;
+        healthy = balance >= minimum;
+        expansionReady = isExpansionReady();
+        sunsetReady = shouldSunsetCoreTax();
+    }
+}

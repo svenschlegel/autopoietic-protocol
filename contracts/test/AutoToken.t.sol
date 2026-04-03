@@ -15,9 +15,9 @@ contract AutoTokenTest is BaseTest {
     // ═══════════════════════════════════════════════════════
 
     function test_initialSupply() public view {
-        // 10% to vesting (held by contract) + 5% to treasury
+        // 10% to vesting (held by contract) + 15% Genesis Geyser to treasury (V3.4)
         uint256 maxSupply = autoToken.MAX_SUPPLY();
-        uint256 expected = (maxSupply * 15) / 100;
+        uint256 expected = (maxSupply * 25) / 100;
         assertEq(autoToken.totalSupply(), expected);
     }
 
@@ -29,7 +29,8 @@ contract AutoTokenTest is BaseTest {
     }
 
     function test_treasuryReceivesInitialAllocation() public view {
-        uint256 expected = (autoToken.MAX_SUPPLY() * 5) / 100;
+        // V3.4: Genesis Geyser expanded to 15%
+        uint256 expected = (autoToken.MAX_SUPPLY() * 15) / 100;
         assertEq(autoToken.balanceOf(address(treasury)), expected);
     }
 
@@ -127,11 +128,11 @@ contract AutoTokenTest is BaseTest {
     }
 
     function test_vrgda_priceIncreasesWhenAhead() public {
-        // Buy a bunch to get ahead of schedule
-        uint256 amount = 100e18; // 100 tokens (10 days worth in 1 tx)
+        // V3.4 Phase 1 target = 1M tokens/day. Buy 2M to be 1M ahead of schedule.
+        uint256 amount = 2_000_000e18;
 
         vm.startPrank(alice);
-        usdc.approve(address(autoToken), 1000e6);
+        usdc.approve(address(autoToken), type(uint256).max);
         autoToken.purchaseVRGDA(amount, 10e6, address(usdc));
         vm.stopPrank();
 
@@ -154,9 +155,9 @@ contract AutoTokenTest is BaseTest {
     function test_vrgda_slippageProtection() public {
         vm.startPrank(alice);
         usdc.approve(address(autoToken), 1e6);
-        
+
         // Set max price very low — should revert
-        vm.expectRevert("AutoToken: price exceeds max");
+        vm.expectRevert("AutoToken: average price exceeds maxPrice");
         autoToken.purchaseVRGDA(1e18, 1, address(usdc)); // maxPrice = 1 wei of USDC
         vm.stopPrank();
     }
@@ -167,7 +168,7 @@ contract AutoTokenTest is BaseTest {
 
         vm.startPrank(alice);
         usdc.approve(address(autoToken), 10e6);
-        vm.expectRevert("AutoToken: VRGDA halted (circuit breaker)");
+        vm.expectRevert("AutoToken: VRGDA halted");
         autoToken.purchaseVRGDA(1e18, 10e6, address(usdc));
         vm.stopPrank();
     }
@@ -185,7 +186,8 @@ contract AutoTokenTest is BaseTest {
         autoToken.purchaseVRGDA(1e18, 10e6, address(usdc));
         vm.stopPrank();
         
-        assertEq(autoToken.balanceOf(alice), 1e18);
+        // V3.4: 1% of minted tokens are burned (MINT_BURN_BPS = 100)
+        assertEq(autoToken.balanceOf(alice), 1e18 * 99 / 100);
     }
 
     function test_vrgda_maxSupply() public {
@@ -235,20 +237,21 @@ contract AutoTokenTest is BaseTest {
     // ═══════════════════════════════════════════════════════
 
     function test_transfer() public {
-        // Give alice some tokens via VRGDA
+        // V3.4: buying 10e18 tokens burns 1%, alice receives 9.9e18
         vm.startPrank(alice);
         usdc.approve(address(autoToken), 100e6);
         autoToken.purchaseVRGDA(10e18, 100e6, address(usdc));
-        
+        uint256 aliceBalance = autoToken.balanceOf(alice); // 9.9e18
+
         autoToken.transfer(bob, 5e18);
         vm.stopPrank();
-        
+
         assertEq(autoToken.balanceOf(bob), 5e18);
-        assertEq(autoToken.balanceOf(alice), 5e18);
+        assertEq(autoToken.balanceOf(alice), aliceBalance - 5e18);
     }
 
     function test_transferFrom() public {
-        // Alice buys tokens
+        // Alice buys tokens (receives 99% due to 1% mint burn)
         vm.startPrank(alice);
         usdc.approve(address(autoToken), 100e6);
         autoToken.purchaseVRGDA(10e18, 100e6, address(usdc));
@@ -258,7 +261,7 @@ contract AutoTokenTest is BaseTest {
         // Bob transfers from Alice
         vm.prank(bob);
         autoToken.transferFrom(alice, carol, 5e18);
-        
+
         assertEq(autoToken.balanceOf(carol), 5e18);
     }
 

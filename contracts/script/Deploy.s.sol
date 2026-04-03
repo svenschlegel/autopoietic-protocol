@@ -28,7 +28,7 @@ contract DeployAutopoietic is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         address deployer = vm.addr(deployerPrivateKey);
-        
+
         // For testnet: deployer acts as both architect and core contributor
         address architect = deployer;
         address coreContributor = deployer;
@@ -46,7 +46,8 @@ contract DeployAutopoietic is Script {
         console.log("1. SoulboundMass:", address(soulboundMass));
 
         // ── Step 2: Deploy Treasury ─────────────────────────
-        Treasury treasury = new Treasury(USDC, MIN_RESERVE);
+        // address(0) = no CPI oracle for testnet (uses hardcoded 2.5% inflation fallback)
+        Treasury treasury = new Treasury(USDC, MIN_RESERVE, address(0));
         console.log("2. Treasury:     ", address(treasury));
 
         // ── Step 3: Deploy EscrowCore ───────────────────────
@@ -65,7 +66,8 @@ contract DeployAutopoietic is Script {
         // ── Step 5: Wire cross-references ───────────────────
         soulboundMass.authorizeMinter(address(escrowCore));
         autoToken.setEscrowCore(address(escrowCore));
-        treasury.setEscrowCore(address(escrowCore));
+        autoToken.setTreasury(address(treasury));
+        treasury.setProtocolContracts(address(escrowCore), address(autoToken));
         console.log("5. Cross-references wired");
 
         vm.stopBroadcast();

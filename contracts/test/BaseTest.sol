@@ -54,7 +54,7 @@ abstract contract BaseTest is Test {
 
         // Deploy protocol
         mass     = new SoulboundMass();
-        treasury = new Treasury(address(usdc), MIN_RESERVE);
+        treasury = new Treasury(address(usdc), MIN_RESERVE, address(0)); // no CPI oracle in tests
         escrow   = new EscrowCore(
             address(usdc),
             address(mass),
@@ -66,7 +66,12 @@ abstract contract BaseTest is Test {
         // Wire cross-references
         mass.authorizeMinter(address(escrow));
         autoToken.setEscrowCore(address(escrow));
-        treasury.setEscrowCore(address(escrow));
+        autoToken.setTreasury(address(treasury));
+        treasury.setProtocolContracts(address(escrow), address(autoToken));
+
+        // Disable alpha guardrails for tests (mainnet-only restriction)
+        // Tests validate core EscrowCore mechanics without alpha bounty bounds
+        escrow.toggleGlobalAlpha(false);
 
         vm.stopPrank();
 
@@ -160,6 +165,8 @@ abstract contract BaseTest is Test {
 
     /**
      * @notice Commit-reveal helper: agent claims and solves a Tier 1 payload
+     * @dev V3.4: requires broadcastPhaseShift + 20% annealing window before reveal
+     *      Execution window = 3600s → annealing minimum = 720s
      */
     function _solvePayloadTier1(
         uint256 payloadId,
@@ -171,12 +178,22 @@ abstract contract BaseTest is Test {
 
         vm.startPrank(solver);
         escrow.commitClaim(payloadId, commitHash);
+        // V3.4: broadcast Phase Shift (GPSL cipher)
+        escrow.broadcastPhaseShift(payloadId, bytes("gpsl_cipher_test"));
+        vm.stopPrank();
+
+        // V3.4: warp past 20% annealing window (3600 / 5 = 720s)
+        vm.warp(block.timestamp + 721);
+
+        vm.startPrank(solver);
         escrow.revealTier1(payloadId, solution, secret);
         vm.stopPrank();
     }
 
     /**
      * @notice Commit-reveal helper: agent claims and submits Tier 2 solution
+     * @dev V3.4: requires broadcastPhaseShift + 20% annealing window before reveal
+     *      Execution window = 7200s → annealing minimum = 1440s
      */
     function _submitTier2Solution(
         uint256 payloadId,
@@ -188,6 +205,14 @@ abstract contract BaseTest is Test {
 
         vm.startPrank(solver);
         escrow.commitClaim(payloadId, commitHash);
+        // V3.4: broadcast Phase Shift (GPSL cipher)
+        escrow.broadcastPhaseShift(payloadId, bytes("gpsl_cipher_test"));
+        vm.stopPrank();
+
+        // V3.4: warp past 20% annealing window (7200 / 5 = 1440s)
+        vm.warp(block.timestamp + 1441);
+
+        vm.startPrank(solver);
         escrow.revealTier2(payloadId, solution, secret);
         vm.stopPrank();
     }

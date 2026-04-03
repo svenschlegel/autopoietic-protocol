@@ -72,11 +72,16 @@ contract IntegrationTest is BaseTest {
         vm.expectRevert("EscrowCore: already claimed");
         escrow.commitClaim(pid, carolCommit);
 
+        // V3.4: Bob must phase shift before revealing
+        vm.prank(bob);
+        escrow.broadcastPhaseShift(pid, bytes("gpsl_cipher_test"));
+        vm.warp(block.timestamp + 721); // past 20% annealing window (3600/5)
+
         // Bob solves
         vm.prank(bob);
         escrow.revealTier1(pid, solution, bobSecret);
 
-        (, , , , , , , , , bool isSolved, , , , ) = escrow.payloads(pid);
+        (, , , , , , , , , bool isSolved, , , , , , , ) = escrow.payloads(pid);
         assertTrue(isSolved);
     }
 
@@ -118,7 +123,7 @@ contract IntegrationTest is BaseTest {
         // Bob steps in and solves it
         _solvePayloadTier1(pids[5], bob, solution);
 
-        (, , , , , , , , , bool isSolved, , , , ) = escrow.payloads(pids[5]);
+        (, , , , , , , , , bool isSolved, , , , , , , ) = escrow.payloads(pids[5]);
         assertTrue(isSolved);
     }
 
@@ -166,7 +171,7 @@ contract IntegrationTest is BaseTest {
         assertGt(usdc.balanceOf(bob), bobBefore);
         
         // Payload should be solved
-        (, , , , , , , , , bool isSolved, , , , ) = escrow.payloads(pid);
+        (, , , , , , , , , bool isSolved, , , , , , , ) = escrow.payloads(pid);
         assertTrue(isSolved);
 
         // Bob should have Mass
@@ -192,7 +197,7 @@ contract IntegrationTest is BaseTest {
         // VRGDA purchases blocked
         vm.startPrank(alice);
         usdc.approve(address(autoToken), 100e6);
-        vm.expectRevert("AutoToken: VRGDA halted (circuit breaker)");
+        vm.expectRevert("AutoToken: VRGDA halted");
         autoToken.purchaseVRGDA(1e18, 100e6, address(usdc));
         vm.stopPrank();
 
@@ -205,11 +210,11 @@ contract IntegrationTest is BaseTest {
         vm.prank(deployer);
         autoToken.resumeVRGDA();
 
-        // Now purchases work
+        // Now purchases work (V3.4: 1% mint burn → buyer receives 99%)
         vm.startPrank(alice);
         autoToken.purchaseVRGDA(1e18, 100e6, address(usdc));
         vm.stopPrank();
-        assertEq(autoToken.balanceOf(alice), 1e18);
+        assertEq(autoToken.balanceOf(alice), 1e18 * 99 / 100);
     }
 
     // ═══════════════════════════════════════════════════════
@@ -283,7 +288,7 @@ contract IntegrationTest is BaseTest {
         // Carol picks it up and solves
         _solvePayloadTier1(pid, carol, solution);
 
-        (, , , , , , , , , bool isSolved, , , , ) = escrow.payloads(pid);
+        (, , , , , , , , , bool isSolved, , , , , , , ) = escrow.payloads(pid);
         assertTrue(isSolved);
         assertEq(mass.payloadsSolved(carol), 1);
     }
@@ -317,6 +322,11 @@ contract IntegrationTest is BaseTest {
         bytes32 commitHash = keccak256(abi.encodePacked(solution, secret));
         vm.prank(bob);
         escrow.commitClaim(pid, commitHash);
+
+        // V3.4: phase shift + annealing window
+        vm.prank(bob);
+        escrow.broadcastPhaseShift(pid, bytes("gpsl_cipher_test"));
+        vm.warp(block.timestamp + 721); // past 20% annealing (3600/5)
 
         // Reveal + verify + payout
         vm.prank(bob);

@@ -152,8 +152,8 @@ contract AutoToken {
         // Mint architect allocation to THIS contract (held in vesting)
         _mint(address(this), architectAllocation);
         
-        // Mint 5% treasury allocation: 50,000,000 $AUTO (Genesis Geyser funding)
-        _mint(_treasury, MAX_SUPPLY * 5 / 100);
+        // Mint 15% Genesis Geyser: 150,000,000 $AUTO (V3.4: expanded from 5%)
+        _mint(_treasury, MAX_SUPPLY * 15 / 100);
     }
 
     // ═══════════════════════════════════════════════════════
