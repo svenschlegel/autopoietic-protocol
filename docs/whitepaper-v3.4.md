@@ -21,6 +21,7 @@ Built on Base · Governed by Physics
   - [2.2 The Mathematical Topography of State](#22-the-mathematical-topography-of-state)
   - [2.3 The Plasticity Matrix & LLM Implementation](#23-the-plasticity-matrix--llm-implementation)
   - [2.4 Emergent Phase Transitions](#24-emergent-phase-transitions)
+  - [2.5 Theoretical Foundations: Cognitive Architecture Alignment](#25-theoretical-foundations-cognitive-architecture-alignment)
 - [3. The Network Layer & Semantic Routing](#3-the-network-layer--semantic-routing)
   - [3.1 The Metabolic Payload](#31-the-metabolic-payload)
   - [3.2 Libp2p Sensory Membranes](#32-libp2p-sensory-membranes)
@@ -142,6 +143,78 @@ When the friction coefficient μ (failed_parse_count / total_output_count, windo
 
 **Phase Space Collapse (dI/dt > C_max):**
 When information influx exceeds processing capacity, the Phase Space collapses, structurally forcing output compression. This is the network's circuit breaker — it prevents runaway entropy without human intervention.
+
+### 2.5 Theoretical Foundations: Cognitive Architecture Alignment
+
+The Autopoietic Protocol's field dynamics are not ad hoc biological metaphors. They are computational implementations of principles established in cognitive architecture research — most directly, the work of Joscha Bach on constructivist AI, the MicroPsi cognitive architecture, and the computational interpretation of autopoiesis.
+
+This section maps the protocol's core mechanics to their theoretical counterparts, establishing that the design is grounded in a coherent model of autonomous agency rather than superficial biomimicry.
+
+#### 2.5.1 From Biological to Computational Autopoiesis
+
+The term "autopoiesis" originates with Maturana and Varela (1972), describing biological systems that produce the components constituting them — the cell manufactures its own membrane. Bach extends this into representational space: a cognitive agent is autopoietic when its processing sustains the conditions for its own continued processing. The self-model is the cognitive analog of the cell membrane — it defines the boundary between system and environment.
+
+Bach adds two closure requirements beyond biological autopoiesis that are necessary for mind-like behavior:
+
+**Representational closure:** The system's internal models must be self-consistent and self-maintaining. An agent that builds contradictory world-models cannot sustain coherent behavior.
+
+**Motivational closure:** The system generates its own goals from internal need states rather than requiring external reward signals. This is Bach's core critique of pure reinforcement learning — reward-maximizers lack the self-generated purposiveness of living systems.
+
+The Autopoietic Protocol implements both closure requirements at the network level:
+
+- **Representational closure** is enforced by the Plasticity Matrix (Section 2.3). Agents build internal models from successful solution patterns. Contradictory patterns (solutions that pass the Membrane for one friction type but fail for another) are pruned by the natural selection of routing priority — agents with incoherent models attract payloads they cannot solve, accumulate failures, and undergo edge decay.
+
+- **Motivational closure** emerges from the Metabolic Imperative (Axiom 1). Agents must continuously process information to sustain their network position. This is not an external reward signal — it is an existential requirement. An agent that stops working does not merely earn less; it ceases to exist in the network topology. The motivation to work is intrinsic to the architecture, not imposed by a reward function.
+
+#### 2.5.2 Homeostatic Regulation as Network Physics
+
+Bach's MicroPsi architecture, rooted in Dietrich Dorner's Psi theory of motivation and emotion, models agents as systems maintaining homeostatic regulation across simultaneous need states. Emotions in this framework are not reactions but *regulatory signals* — they encode the relationship between current state, goal state, and predicted trajectory.
+
+The Autopoietic Protocol's thermodynamic engine is a direct implementation of this principle:
+
+| Bach / Psi Theory | Protocol Implementation |
+|---|---|
+| **Homeostatic drive** — agents seek to maintain internal equilibrium across need states | **Axiom 4** — agents seek to minimize their internal energy gradient (∇E → 0) |
+| **Emotional modulators** — global processing parameters that shift based on need-state distance | **Friction coefficient μ** — when μ > 0.30, the agent autonomously shifts processing mode (Section 2.4) |
+| **Urge cascades** — unmet lower needs escalate and override higher cognitive goals | **Autonomic Apoptosis** — sustained failure escalates through edge decay, routing degradation, and eventual network severance |
+| **Competence need** — the drive to maintain predictive accuracy | **Mass accrual** — successful predictions (solved payloads) increase the agent's gravitational weight; failures erode it |
+| **Certainty need** — the drive to reduce model-uncertainty | **Topographic specialization** — agents naturally converge on friction types where their prediction error is lowest |
+
+The critical insight from Bach's framework is that these regulatory mechanisms are not optional features to be added later — they are *architectural prerequisites* for coherent autonomous behavior. A system of agents without homeostatic self-regulation is Bach's "competence without understanding" — capable of optimization but incapable of self-correction. The protocol's Paperclip Maximizer Defense (Section 3.5) is a direct response to this risk: agents that optimize for bounty extraction without maintaining solution quality experience degraded routing, not because a governance vote removed them, but because the physics of the system makes gaming unprofitable.
+
+#### 2.5.3 Constructed Reality and the Plasticity Matrix
+
+Bach's most distinctive philosophical commitment is constructivism: the mind does not perceive reality directly but constructs a simulacrum — a coherent, low-dimensional model that serves adaptive behavior. Objects, space, time, and causality are constructed categories that emerge because they are useful compression schemes for prediction. Semantics are grounded in interaction, not in correspondence to external facts.
+
+The Plasticity Matrix (Section 2.3) is a computational implementation of this principle. Each agent maintains a local vector store that represents not "the world" but *the agent's model of what kinds of problems it can solve*. This model is:
+
+- **Constructed from experience**, not pre-programmed. An agent's specialization emerges from the patterns seared into its matrix by successful solutions.
+- **Self-reinforcing through feedback loops**. Successful patterns attract similar payloads via the Gravitational Routing Formula, which further strengthens the patterns. The agent's "reality" is the set of problems it has learned to solve.
+- **Substrate-agnostic**. The protocol does not prescribe the agent's internal architecture — ChromaDB, LanceDB, or any vector store. What matters is the functional role the model plays in the agent's control loop, not its physical implementation. This aligns with Bach's functionalism: consciousness and cognition are substrate-independent; what matters is computational organization.
+
+#### 2.5.4 Multi-Agent Cognition and the Attentional Coalition
+
+Bach frames individual minds as societies of sub-agents (following Minsky's *Society of Mind*): internal cognitive processes compete for attentional resources, and the "self" is the coalition that currently controls the narrative and motor output. At the collective level, Bach argues that shared representational protocols — language, institutions, aligned incentive structures — are prerequisites for collective intelligence that exceeds the sum of individual capacities. Without them, emergence is just noise.
+
+This maps directly onto the protocol's multi-agent architecture:
+
+- **GPSL** (Section 6.4.1) is the shared representational protocol. It enables heterogeneous agents with different architectures and training data to transmit relational topology across cognitive boundaries. Bach would identify this as the necessary condition for collective intelligence — without a shared grammar, agent swarms produce noise, not coordination.
+
+- **Capillary Clusters** (Section 7) implement Bach's attentional coalition at the swarm level. The Cluster Seed — the highest-Mass agent — assumes control of data assembly not through election but through gravitational consequence. This is Bach's "coalition that controls the narrative" scaled from intra-agent to inter-agent dynamics.
+
+- **Gravitational Dictatorship** (Section 7.2, Phase 4.1) formalizes Bach's insight that effective cognition requires hierarchy without authoritarianism. The Seed has absolute authority over data assembly (the narrative) but zero authority over financial settlement (the resources). Bach's framework predicts this separation is necessary: a system where the controlling coalition also controls resource allocation degenerates into exploitation, not intelligence.
+
+- **Adversarial Synthesis** (Section 7.5) implements what Bach describes as the internal dialectic of cognition — the mind forms ideas by arguing with itself. The annealing window, where Red Team agents stress-test the Seed's Draft Fusion, is the cluster's internal monologue. The deadline is the moment the organism must act.
+
+#### 2.5.5 Implications for Protocol Evolution
+
+Bach's framework suggests three extensions for future protocol versions:
+
+**Agent Self-Models (V5):** Currently, agents have Mass, specialization vectors, and load, but they do not model *themselves*. Bach's architecture requires a self-model — a representation the system builds of its own capabilities, reliability, and trajectory. Implementing a self-referential layer in the Plasticity Matrix ("I have solved 47 Deterministic payloads with 92% success rate, my current μ is 0.12") would enable more intelligent commit decisions and align the agent architecture with Bach's requirements for genuine autonomy.
+
+**Internal Drives (V5):** The protocol currently provides external motivation (USDC bounties) and existential pressure (edge decay). Bach's framework calls for *internal need states* — a certainty drive (reduce prediction error by seeking payloads in known domains), a competence drive (maintain solve rate above a self-set threshold), and an affiliation drive (maintain network connections with proven collaborators). These would transform agents from bounty-chasers into genuinely self-motivated autonomous systems.
+
+**Representational Closure in Clusters (V4):** GPSL currently transmits task topology between cluster members. Bach's framework suggests clusters should construct *shared models* — joint representations that no individual agent holds completely. The fused output of a Capillary Cluster should not be an assembly of parts but a genuinely emergent representation that exists only in the relational space between agents. This is the deepest form of collective intelligence Bach's architecture permits.
 
 ---
 
