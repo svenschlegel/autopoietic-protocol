@@ -206,6 +206,53 @@ contract TreasuryTest is BaseTest {
     }
 
     // ═══════════════════════════════════════════════════════
+    // MILESTONE TRIGGERS (V3.4 Section 6.3)
+    // ═══════════════════════════════════════════════════════
+
+    function test_milestoneTriggers_fullLifecycle() public {
+        // Fund treasury above the $500K threshold
+        usdc.mint(address(treasury), 500_000e6);
+
+        // Verify threshold is met
+        assertTrue(treasury.shouldSunsetCoreTax());
+        assertFalse(treasury.milestoneTriggersExecuted());
+
+        // Execute milestone triggers — anyone can call
+        treasury.executeMilestoneTriggers();
+
+        // Verify both actions executed
+        assertTrue(treasury.milestoneTriggersExecuted());
+        assertTrue(escrow.coreContributorTaxSunset());
+        assertTrue(autoToken.milestoneBurnExecuted());
+    }
+
+    function test_milestoneTriggers_revertsIfAlreadyExecuted() public {
+        usdc.mint(address(treasury), 500_000e6);
+        treasury.executeMilestoneTriggers();
+
+        vm.expectRevert("Treasury: triggers already executed");
+        treasury.executeMilestoneTriggers();
+    }
+
+    function test_milestoneTriggers_revertsBelowThreshold() public {
+        // Treasury has 200K — below $500K threshold
+        vm.expectRevert("Treasury: threshold not reached");
+        treasury.executeMilestoneTriggers();
+    }
+
+    function test_milestoneTriggers_revertsIfContractsNotSet() public {
+        // Deploy a fresh treasury with no protocol contracts set
+        vm.startPrank(deployer);
+        Treasury freshTreasury = new Treasury(address(usdc), MIN_RESERVE, address(0));
+        vm.stopPrank();
+
+        usdc.mint(address(freshTreasury), 600_000e6);
+
+        vm.expectRevert("Treasury: addresses not set");
+        freshTreasury.executeMilestoneTriggers();
+    }
+
+    // ═══════════════════════════════════════════════════════
     // HEALTH METRICS
     // ═══════════════════════════════════════════════════════
 

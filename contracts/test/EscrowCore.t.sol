@@ -498,6 +498,212 @@ contract EscrowCoreTest is BaseTest {
     }
 
     // ═══════════════════════════════════════════════════════
+    // RECLAIM BOUNTY (V3.4 Anti-Stall)
+    // ═══════════════════════════════════════════════════════
+
+    function test_reclaimBounty_unclaimed_afterWindow() public {
+        uint256 bounty = 1000e6;
+        uint256 pid = _createTier1Payload(alice, bounty, SOLUTION);
+
+        // Nobody claims — warp past creation + executionWindow
+        vm.warp(block.timestamp + 3601);
+
+        uint256 aliceBefore = usdc.balanceOf(alice);
+        vm.prank(alice);
+        escrow.reclaimBounty(pid);
+
+        // Alice gets bounty back (not the tax — that was already routed)
+        assertEq(usdc.balanceOf(alice), aliceBefore + bounty);
+
+        // Payload marked as solved/voided
+        (, , , , , , , , , bool isSolved, , , , , , , ) = escrow.payloads(pid);
+        assertTrue(isSolved);
+    }
+
+    function test_reclaimBounty_claimed_usesClaimExpiry() public {
+        uint256 bounty = 1000e6;
+        uint256 pid = _createTier1Payload(alice, bounty, SOLUTION);
+
+        // Bob claims — claimExpiry = block.timestamp + 3600
+        bytes32 commitHash = keccak256(abi.encodePacked(SOLUTION, bytes32("s")));
+        vm.prank(bob);
+        escrow.commitClaim(pid, commitHash);
+
+        // Warp past createdAt + window but NOT past claimExpiry
+        // (claimExpiry could be later if commit happened after creation)
+        // In this case they're close, so warp past claimExpiry
+        vm.warp(block.timestamp + 3601);
+
+        uint256 aliceBefore = usdc.balanceOf(alice);
+        vm.prank(alice);
+        escrow.reclaimBounty(pid);
+
+        assertEq(usdc.balanceOf(alice), aliceBefore + bounty);
+    }
+
+    function test_reclaimBounty_slashesClaimedAgent() public {
+        uint256 bounty = 1000e6;
+        uint256 pid = _createTier1Payload(alice, bounty, SOLUTION);
+
+        // Give bob some mass to slash
+        vm.startPrank(deployer);
+        mass.authorizeMinter(deployer);
+        mass.accrueMass(bob, 100e18);
+        mass.revokeMinter(deployer);
+        vm.stopPrank();
+
+        uint256 bobMassBefore = mass.mass(bob);
+
+        // Bob claims but doesn't solve
+        bytes32 commitHash = keccak256(abi.encodePacked(SOLUTION, bytes32("s")));
+        vm.prank(bob);
+        escrow.commitClaim(pid, commitHash);
+
+        // Warp past claimExpiry
+        vm.warp(block.timestamp + 3601);
+
+        vm.prank(alice);
+        escrow.reclaimBounty(pid);
+
+        // Bob's mass should be slashed by 5% (severity = 500 bps)
+        uint256 expectedSlash = (bobMassBefore * 500) / 10000;
+        assertEq(mass.mass(bob), bobMassBefore - expectedSlash);
+    }
+
+    function test_reclaimBounty_revertsBeforeDeadline() public {
+        uint256 pid = _createTier1Payload(alice, 1000e6, SOLUTION);
+
+        // Try to reclaim immediately — should fail
+        vm.prank(alice);
+        vm.expectRevert("EscrowCore: deadline not passed");
+        escrow.reclaimBounty(pid);
+    }
+
+    function test_reclaimBounty_revertsIfSolved() public {
+        uint256 pid = _createTier1Payload(alice, 1000e6, SOLUTION);
+        _solvePayloadTier1(pid, bob, SOLUTION);
+
+        // Warp past window
+        vm.warp(block.timestamp + 3601);
+
+        vm.prank(alice);
+        vm.expectRevert("EscrowCore: already solved");
+        escrow.reclaimBounty(pid);
+    }
+
+    function test_reclaimBounty_revertsNotCreator() public {
+        uint256 pid = _createTier1Payload(alice, 1000e6, SOLUTION);
+        vm.warp(block.timestamp + 3601);
+
+        vm.prank(bob);
+        vm.expectRevert("EscrowCore: not creator");
+        escrow.reclaimBounty(pid);
+    }
+
+    function test_reclaimBounty_revertsDoubleReclaim() public {
+        uint256 pid = _createTier1Payload(alice, 1000e6, SOLUTION);
+        vm.warp(block.timestamp + 3601);
+
+        vm.prank(alice);
+        escrow.reclaimBounty(pid);
+
+        // Second reclaim fails (marked as solved)
+        vm.prank(alice);
+        vm.expectRevert("EscrowCore: already solved");
+        escrow.reclaimBounty(pid);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // PAUSE COVERAGE (V3.4 Security Hardening)
+    // ═══════════════════════════════════════════════════════
+
+    function test_pause_blocksReclaimBounty() public {
+        uint256 pid = _createTier1Payload(alice, 1000e6, SOLUTION);
+        vm.warp(block.timestamp + 3601);
+
+        vm.prank(deployer);
+        escrow.pause();
+
+        vm.prank(alice);
+        vm.expectRevert("EscrowCore: paused");
+        escrow.reclaimBounty(pid);
+    }
+
+    function test_pause_blocksReleaseExpiredClaim() public {
+        uint256 pid = _createTier1Payload(alice, 1000e6, SOLUTION);
+        bytes32 commitHash = keccak256(abi.encodePacked(SOLUTION, bytes32("s")));
+        vm.prank(bob);
+        escrow.commitClaim(pid, commitHash);
+        vm.warp(block.timestamp + 3601);
+
+        vm.prank(deployer);
+        escrow.pause();
+
+        vm.expectRevert("EscrowCore: paused");
+        escrow.releaseExpiredClaim(pid);
+    }
+
+    function test_pause_blocksFinalizeTier2() public {
+        uint256 pid = _createTier2Payload(alice, 1000e6);
+        _submitTier2Solution(pid, bob, SOLUTION);
+        vm.warp(block.timestamp + 24 hours + 1);
+
+        vm.prank(deployer);
+        escrow.pause();
+
+        vm.expectRevert("EscrowCore: paused");
+        escrow.finalizeTier2(pid);
+    }
+
+    function test_pause_blocksCastJuryVote() public {
+        uint256 bounty = 1000e6;
+        uint256 pid = _createTier2Payload(alice, bounty);
+        _submitTier2Solution(pid, bob, SOLUTION);
+
+        uint256 challengeBond = (bounty * 500) / 10000;
+        vm.startPrank(dave);
+        usdc.approve(address(escrow), challengeBond);
+        escrow.challengeSubmission(pid);
+        vm.stopPrank();
+
+        uint256 jurorBond = (bounty * 50) / 10000;
+        vm.startPrank(eve);
+        usdc.approve(address(escrow), jurorBond);
+        escrow.registerAsJuror(pid);
+        vm.stopPrank();
+
+        vm.prank(deployer);
+        escrow.pause();
+
+        vm.prank(eve);
+        vm.expectRevert("EscrowCore: paused");
+        escrow.castJuryVote(pid, true);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // CORE CONTRIBUTOR TAX SUNSET — TREASURY CALLER
+    // ═══════════════════════════════════════════════════════
+
+    function test_sunsetCoreContributorTax_byTreasury() public {
+        // Treasury address should be able to sunset the tax
+        vm.prank(address(treasury));
+        escrow.sunsetCoreContributorTax();
+        assertTrue(escrow.coreContributorTaxSunset());
+    }
+
+    function test_sunsetCoreContributorTax_byOwner() public {
+        vm.prank(deployer);
+        escrow.sunsetCoreContributorTax();
+        assertTrue(escrow.coreContributorTaxSunset());
+    }
+
+    function test_sunsetCoreContributorTax_revertsUnauthorized() public {
+        vm.prank(alice);
+        vm.expectRevert("EscrowCore: not authorized");
+        escrow.sunsetCoreContributorTax();
+    }
+
+    // ═══════════════════════════════════════════════════════
     // VASCULAR PAYOUT DISTRIBUTION
     // ═══════════════════════════════════════════════════════
 

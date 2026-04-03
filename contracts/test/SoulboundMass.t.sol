@@ -64,6 +64,71 @@ contract SoulboundMassTest is BaseTest {
     }
 
     // ═══════════════════════════════════════════════════════
+    // SLASH MASS (V3.4 Anti-Stall Penalty)
+    // ═══════════════════════════════════════════════════════
+
+    function test_slashMass_reducesByPercentage() public {
+        // Give bob 100e18 mass
+        vm.prank(address(escrow));
+        mass.accrueMass(bob, 100e18);
+        assertEq(mass.mass(bob), 100e18);
+
+        // Slash 5% (500 bps)
+        vm.prank(address(escrow));
+        mass.slashMass(bob, 500);
+
+        assertEq(mass.mass(bob), 95e18);
+        // totalMass also reduced
+        assertEq(mass.totalMass(), 360e18 + 95e18); // 6 jurors * 60e18 + bob's remaining
+    }
+
+    function test_slashMass_zeroMassNoRevert() public {
+        // Bob has 0 mass — slashing should not revert, just do nothing
+        assertEq(mass.mass(bob), 0);
+
+        vm.prank(address(escrow));
+        mass.slashMass(bob, 500);
+
+        assertEq(mass.mass(bob), 0);
+    }
+
+    function test_slashMass_fullSlash() public {
+        vm.prank(address(escrow));
+        mass.accrueMass(bob, 100e18);
+
+        // Slash 100% (10000 bps)
+        vm.prank(address(escrow));
+        mass.slashMass(bob, 10000);
+
+        assertEq(mass.mass(bob), 0);
+    }
+
+    function test_slashMass_revertsSeverityOver100() public {
+        vm.prank(address(escrow));
+        mass.accrueMass(bob, 100e18);
+
+        vm.prank(address(escrow));
+        vm.expectRevert("SoulboundMass: severity > 100%");
+        mass.slashMass(bob, 10001);
+    }
+
+    function test_slashMass_revertsUnauthorized() public {
+        vm.prank(alice);
+        vm.expectRevert("SoulboundMass: not authorized");
+        mass.slashMass(bob, 500);
+    }
+
+    function test_slashMass_emitsEvent() public {
+        vm.prank(address(escrow));
+        mass.accrueMass(bob, 200e18);
+
+        vm.prank(address(escrow));
+        vm.expectEmit(true, false, false, true);
+        emit SoulboundMass.MassSlashed(bob, 10e18, 190e18); // 5% of 200 = 10
+        mass.slashMass(bob, 500);
+    }
+
+    // ═══════════════════════════════════════════════════════
     // QUARANTINE (V3 Appendix A.3: k=5)
     // ═══════════════════════════════════════════════════════
 
