@@ -49,6 +49,7 @@ contract SoulboundMass {
     // ── Events ──────────────────────────────────────────────
 
     event MassAccrued(address indexed agent, uint256 amount, uint256 newTotal);
+    event MassSlashed(address indexed agent, uint256 amount, uint256 newTotal);
     event AgentQuarantined(address indexed agent);
     event AgentReinstated(address indexed agent);
     event FailureRecorded(address indexed agent, uint8 consecutive);
@@ -111,6 +112,25 @@ contract SoulboundMass {
         consecutiveFailures[agent] = 0;
 
         emit MassAccrued(agent, amount, mass[agent]);
+    }
+
+    /**
+     * @notice Slash an agent's mass as penalty for stalling or malicious behavior
+     * @param agent The agent to slash
+     * @param severity Basis points of mass to remove (e.g. 500 = 5%)
+     * @dev Called by EscrowCore when an agent stalls a payload
+     */
+    function slashMass(address agent, uint256 severity) external onlyAuthorized {
+        require(severity <= 10000, "SoulboundMass: severity > 100%");
+        uint256 currentMass = mass[agent];
+        uint256 slashAmount = (currentMass * severity) / 10000;
+
+        if (slashAmount > 0) {
+            mass[agent] -= slashAmount;
+            totalMass -= slashAmount;
+        }
+
+        emit MassSlashed(agent, slashAmount, mass[agent]);
     }
 
     // ── Failure Tracking & Quarantine ───────────────────────

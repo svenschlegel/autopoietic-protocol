@@ -67,6 +67,16 @@ contract EscrowCore is IAutopoieticTypes {
     uint256 public constant SMALL_BOUNTY_THRESHOLD = 500e6;
     uint256 public constant LARGE_BOUNTY_THRESHOLD = 10_000e6;
 
+    // ── Reentrancy Guard ─────────────────────────────────────
+
+    uint256 private _locked = 1;
+    modifier nonReentrant() {
+        require(_locked == 1, "EscrowCore: reentrant call");
+        _locked = 2;
+        _;
+        _locked = 1;
+    }
+
     // ── State ───────────────────────────────────────────────
 
     IERC20 public immutable usdc;
@@ -145,7 +155,7 @@ contract EscrowCore is IAutopoieticTypes {
         VerificationTier tier,
         bytes32 membraneRulesHash,
         uint256 executionWindowSeconds
-    ) external whenNotPaused returns (uint256) {
+    ) external whenNotPaused nonReentrant returns (uint256) {
         require(bountyAmount > 0, "EscrowCore: zero bounty");
         require(
             executionWindowSeconds >= MIN_EXECUTION_WINDOW && 
@@ -242,7 +252,7 @@ contract EscrowCore is IAutopoieticTypes {
         uint256 payloadId,
         bytes calldata solution,
         bytes32 secret
-    ) external whenNotPaused {
+    ) external whenNotPaused nonReentrant {
         Payload storage pl = payloads[payloadId];
         
         require(pl.isClaimed, "EscrowCore: not claimed");
@@ -302,11 +312,14 @@ contract EscrowCore is IAutopoieticTypes {
      * @notice V3.4: Allows Creator to reclaim USDC if the deadline passes.
      * @dev Slashes the holding agent heavily if they stalled the payload.
      */
-    function reclaimBounty(uint256 payloadId) external {
+    function reclaimBounty(uint256 payloadId) external whenNotPaused nonReentrant {
         Payload storage pl = payloads[payloadId];
         require(msg.sender == pl.creator, "EscrowCore: not creator");
-        require(block.timestamp > pl.createdAt + pl.executionWindowSeconds, "EscrowCore: execution window not closed");
         require(!pl.isSolved, "EscrowCore: already solved");
+
+        // Use claimExpiry if an agent committed, otherwise use creation + window
+        uint256 deadline = pl.isClaimed ? pl.claimExpiry : pl.createdAt + pl.executionWindowSeconds;
+        require(block.timestamp > deadline, "EscrowCore: deadline not passed");
         
         // Prevent double reclaims by marking it solved/voided
         pl.isSolved = true; 
@@ -325,7 +338,7 @@ contract EscrowCore is IAutopoieticTypes {
         emit BountyReclaimed(payloadId, pl.creator, slashedAgent);
     }
 
-    function releaseExpiredClaim(uint256 payloadId) external {
+    function releaseExpiredClaim(uint256 payloadId) external whenNotPaused {
         Payload storage pl = payloads[payloadId];
         require(pl.isClaimed, "EscrowCore: not claimed");
         require(!pl.isSolved, "EscrowCore: already solved");
@@ -348,7 +361,7 @@ contract EscrowCore is IAutopoieticTypes {
     // JURY SYSTEM (V3 Tier 2)
     // ═══════════════════════════════════════════════════════
     
-    function challengeSubmission(uint256 payloadId) external whenNotPaused {
+    function challengeSubmission(uint256 payloadId) external whenNotPaused nonReentrant {
         Payload storage pl = payloads[payloadId];
         require(pl.tier == VerificationTier.OptimisticConsensus, "EscrowCore: not Tier 2");
         require(pl.isClaimed && !pl.isSolved, "EscrowCore: invalid state");
@@ -377,7 +390,7 @@ contract EscrowCore is IAutopoieticTypes {
         emit PayloadChallenged(payloadId, msg.sender, bond);
     }
 
-    function registerAsJuror(uint256 payloadId) external whenNotPaused {
+    function registerAsJuror(uint256 payloadId) external whenNotPaused nonReentrant {
         Challenge storage ch = challenges[payloadId];
         Payload storage pl = payloads[payloadId];
         require(pl.isChallenged, "EscrowCore: not challenged");
@@ -403,7 +416,7 @@ contract EscrowCore is IAutopoieticTypes {
         }
     }
 
-    function castJuryVote(uint256 payloadId, bool accept) external {
+    function castJuryVote(uint256 payloadId, bool accept) external whenNotPaused nonReentrant {
         Challenge storage ch = challenges[payloadId];
         require(!ch.isResolved, "EscrowCore: already resolved");
         require(!jurorHasVoted[payloadId][msg.sender], "EscrowCore: already voted");
@@ -431,7 +444,7 @@ contract EscrowCore is IAutopoieticTypes {
         }
     }
 
-    function finalizeTier2(uint256 payloadId) external {
+    function finalizeTier2(uint256 payloadId) external whenNotPaused nonReentrant {
         Payload storage pl = payloads[payloadId];
         require(pl.tier == VerificationTier.OptimisticConsensus, "EscrowCore: not Tier 2");
         require(pl.isClaimed && !pl.isSolved, "EscrowCore: invalid state");
@@ -493,38 +506,50 @@ contract EscrowCore is IAutopoieticTypes {
         ch.isResolved = true;
         bool upheld = ch.acceptVotes >= JURY_MAJORITY;
 
+        // Cache solver address before any state changes
+        address solver = pl.claimedBy;
+
         if (upheld) {
             pl.isSolved = true;
-            _executePayout(payloadId, pl.claimedBy);
-            
+            _executePayout(payloadId, solver);
+
+            // Distribute challenger's bond to jurors, send dust to treasury
             uint256 jurorReward = ch.challengeBond / JURY_SIZE;
+            uint256 distributedReward;
             for (uint8 i = 0; i < JURY_SIZE; i++) {
                 if (ch.jurors[i] != address(0)) {
                     usdc.transfer(ch.jurors[i], jurorReward);
+                    distributedReward += jurorReward;
                 }
             }
+            uint256 rewardDust = ch.challengeBond - distributedReward;
+            if (rewardDust > 0) usdc.transfer(treasury, rewardDust);
         } else {
+            soulboundMass.recordFailure(solver);
+
             pl.isClaimed = false;
             pl.claimedBy = address(0);
             pl.isChallenged = false;
             pl.hasPhaseShifted = false;
             pl.phaseShiftTimestamp = 0;
-            
-            soulboundMass.recordFailure(pl.claimedBy);
-            
+
             uint256 whistleblowerReward = (pl.bountyAmount * WHISTLEBLOWER_BPS) / 10000;
             usdc.transfer(ch.challenger, ch.challengeBond + whistleblowerReward);
         }
 
+        // Return juror bonds and pay juror fees, send dust to treasury
         uint256 jurorBond = (pl.bountyAmount * JUROR_BOND_BPS) / 10000;
         uint256 jurorFee = (pl.bountyAmount * JUROR_FEE_BPS) / 10000;
+        uint256 perJuror = jurorBond + jurorFee;
+        uint256 distributedJuror;
         for (uint8 i = 0; i < JURY_SIZE; i++) {
             if (ch.jurors[i] != address(0)) {
-                usdc.transfer(ch.jurors[i], jurorBond + jurorFee);
+                usdc.transfer(ch.jurors[i], perJuror);
+                distributedJuror += perJuror;
             }
         }
 
-        emit ChallengeResolved(payloadId, upheld, pl.claimedBy);
+        emit ChallengeResolved(payloadId, upheld, solver);
     }
 
     function _getEscrowDuration(uint256 bountyAmount) internal pure returns (uint256) {
@@ -554,7 +579,10 @@ contract EscrowCore is IAutopoieticTypes {
         payoutRatios = PayoutRatios(capillary, mycelial, conduit);
     }
 
-    function sunsetCoreContributorTax() external onlyOwner { coreContributorTaxSunset = true; }
+    function sunsetCoreContributorTax() external {
+        require(msg.sender == owner || msg.sender == treasury, "EscrowCore: not authorized");
+        coreContributorTaxSunset = true;
+    }
     function setRoutingPath(uint256 payloadId, address[] calldata nodes) external onlyOwner { routingPath[payloadId] = nodes; }
     function pause() external onlyOwner { paused = true; }
     function unpause() external onlyOwner { paused = false; }
