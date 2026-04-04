@@ -1,0 +1,10 @@
+.env
+MARKETING_STRATEGY.md
+AUDIT_OUTREACH_EMAILS.md
+TODO_NEXT.md
+
+# Simulation (private — publish when results tell a story)
+simulation/
+configs/
+results/
+requirements-sim.txt
