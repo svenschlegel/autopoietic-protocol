@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravitational Routing: The Mass Monopoly | GravDic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bar-transition { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-300 font-sans p-6 md:p-12 min-h-screen flex items-center justify-center">
+
+    <div class="max-w-5xl w-full bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-6 md:p-8">
+
+        <div class="mb-8 border-b border-slate-800 pb-4">
+            <h1 class="text-2xl font-bold text-white tracking-tight">The Mass Monopoly Simulator</h1>
+            <p class="text-slate-400 text-sm mt-1">Demonstrating why unbounded mass overrides GPSL structural distance.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+
+            <div class="space-y-5 bg-slate-950/50 p-6 border border-slate-800/50 rounded-xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h2 class="text-sm font-bold text-indigo-400 uppercase tracking-wider">Dominant Agent</h2>
+                    <span class="text-xs bg-indigo-900/50 text-indigo-300 px-2 py-1 rounded">Incumbent</span>
+                </div>
+
+                <div>
+                    <label class="flex justify-between text-sm font-medium text-slate-300 mb-1">
+                        <span>Mass (M)</span>
+                        <span id="domMassVal" class="text-white font-mono">5279</span>
+                    </label>
+                    <input type="range" id="domMass" min="1000" max="10000" value="5279" class="w-full accent-indigo-500">
+                </div>
+
+                <div>
+                    <label class="flex justify-between text-sm font-medium text-slate-300 mb-1">
+                        <span>GPSL Distance (D) <span class="text-slate-500 text-xs ml-1">(Higher = Worse)</span></span>
+                        <span id="domDistVal" class="text-white font-mono">2.0</span>
+                    </label>
+                    <input type="range" id="domDist" min="0.0" max="3.0" step="0.1" value="2.0" class="w-full accent-indigo-500">
+                </div>
+
+                <div>
+                    <label class="flex justify-between text-sm font-medium text-slate-300 mb-1">
+                        <span>Current Load (L)</span>
+                        <span id="domLoadVal" class="text-white font-mono">0</span>
+                    </label>
+                    <input type="range" id="domLoad" min="0" max="10" value="0" class="w-full accent-indigo-500">
+                </div>
+            </div>
+
+            <div class="space-y-5 bg-slate-950/50 p-6 border border-slate-800/50 rounded-xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h2 class="text-sm font-bold text-emerald-400 uppercase tracking-wider">Challenger Agent</h2>
+                    <span class="text-xs bg-emerald-900/50 text-emerald-300 px-2 py-1 rounded">New Entrant</span>
+                </div>
+
+                <div>
+                    <label class="flex justify-between text-sm font-medium text-slate-300 mb-1">
+                        <span>Mass (M)</span>
+                        <span id="chalMassVal" class="text-white font-mono">10</span>
+                    </label>
+                    <input type="range" id="chalMass" min="1" max="500" value="10" class="w-full accent-emerald-500">
+                </div>
+
+                <div>
+                    <label class="flex justify-between text-sm font-medium text-slate-300 mb-1">
+                        <span>GPSL Distance (D) <span class="text-slate-500 text-xs ml-1">(Lower = Better)</span></span>
+                        <span id="chalDistVal" class="text-white font-mono">0.0</span>
+                    </label>
+                    <input type="range" id="chalDist" min="0.0" max="3.0" step="0.1" value="0.0" class="w-full accent-emerald-500">
+                </div>
+
+                <div>
+                    <label class="flex justify-between text-sm font-medium text-slate-300 mb-1">
+                        <span>Current Load (L)</span>
+                        <span id="chalLoadVal" class="text-white font-mono">0</span>
+                    </label>
+                    <input type="range" id="chalLoad" min="0" max="10" value="0" class="w-full accent-emerald-500">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 text-center shadow-inner relative overflow-hidden">
+
+            <h3 class="text-sm font-medium text-slate-400 uppercase tracking-widest mb-4">Routing Outcome</h3>
+
+            <div class="flex justify-center items-baseline space-x-8 mb-6">
+                <div class="text-right">
+                    <div id="domScore" class="text-5xl font-bold text-indigo-400 font-mono">0.00</div>
+                    <div class="text-xs text-slate-500 mt-1">Dominant Score</div>
+                </div>
+                <div class="text-3xl text-slate-600 font-light">vs</div>
+                <div class="text-left">
+                    <div id="chalScore" class="text-5xl font-bold text-emerald-400 font-mono">0.00</div>
+                    <div class="text-xs text-slate-500 mt-1">Challenger Score</div>
+                </div>
+            </div>
+
+            <div class="inline-block bg-slate-800 border border-slate-600 rounded-full px-6 py-2 mb-8">
+                <span id="ratioText" class="text-white font-medium">Dominant agent is X times more likely to win</span>
+            </div>
+
+            <div class="space-y-3 max-w-2xl mx-auto">
+                <div class="flex items-center space-x-3">
+                    <span class="w-24 text-right text-xs font-bold text-indigo-400 uppercase">Dominant</span>
+                    <div class="flex-1 bg-slate-800 rounded-r-full h-6 overflow-hidden">
+                        <div id="domBar" class="bg-indigo-500 h-6 rounded-r-full bar-transition" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="w-24 text-right text-xs font-bold text-emerald-400 uppercase">Challenger</span>
+                    <div class="flex-1 bg-slate-800 rounded-r-full h-6 overflow-hidden">
+                        <div id="chalBar" class="bg-emerald-500 h-6 rounded-r-full bar-transition" style="width: 2%"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // --- GRAVDIC CONSTITUTIONAL CONSTANTS ---
+        const ALPHA = 0.8;
+        const BETA = 1.5;
+
+        function calculatePriority(mass, distance, load) {
+            const numerator = Math.pow(mass, ALPHA);
+            const denominator = (distance + 1) * Math.pow(load + 1, BETA);
+            return numerator / denominator;
+        }
+
+        const inputs = {
+            domMass: document.getElementById('domMass'),
+            domDist: document.getElementById('domDist'),
+            domLoad: document.getElementById('domLoad'),
+            chalMass: document.getElementById('chalMass'),
+            chalDist: document.getElementById('chalDist'),
+            chalLoad: document.getElementById('chalLoad')
+        };
+
+        const displays = {
+            domMass: document.getElementById('domMassVal'),
+            domDist: document.getElementById('domDistVal'),
+            domLoad: document.getElementById('domLoadVal'),
+            chalMass: document.getElementById('chalMassVal'),
+            chalDist: document.getElementById('chalDistVal'),
+            chalLoad: document.getElementById('chalLoadVal'),
+            domScore: document.getElementById('domScore'),
+            chalScore: document.getElementById('chalScore'),
+            ratioText: document.getElementById('ratioText'),
+            domBar: document.getElementById('domBar'),
+            chalBar: document.getElementById('chalBar')
+        };
+
+        function updateSimulation() {
+            const dM = parseFloat(inputs.domMass.value);
+            const dD = parseFloat(inputs.domDist.value);
+            const dL = parseFloat(inputs.domLoad.value);
+            const cM = parseFloat(inputs.chalMass.value);
+            const cD = parseFloat(inputs.chalDist.value);
+            const cL = parseFloat(inputs.chalLoad.value);
+
+            displays.domMass.innerText = dM;
+            displays.domDist.innerText = dD.toFixed(1);
+            displays.domLoad.innerText = dL;
+            displays.chalMass.innerText = cM;
+            displays.chalDist.innerText = cD.toFixed(1);
+            displays.chalLoad.innerText = cL;
+
+            const dScore = calculatePriority(dM, dD, dL);
+            const cScore = calculatePriority(cM, cD, cL);
+
+            displays.domScore.innerText = dScore.toFixed(2);
+            displays.chalScore.innerText = cScore.toFixed(2);
+
+            const ratio = dScore / cScore;
+            if (ratio >= 1) {
+                displays.ratioText.innerText = `Dominant agent is ${ratio.toFixed(1)}× more likely to win`;
+            } else {
+                displays.ratioText.innerText = `Challenger is ${(1 / ratio).toFixed(1)}× more likely to win`;
+            }
+
+            const max = Math.max(dScore, cScore);
+            displays.domBar.style.width = `${(dScore / max) * 100}%`;
+            displays.chalBar.style.width = `${(cScore / max) * 100}%`;
+        }
+
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', updateSimulation);
+        });
+
+        updateSimulation();
+    </script>
+</body>
+</html>

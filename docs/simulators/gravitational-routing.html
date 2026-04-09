@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravitational Routing Simulator | GravDic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bar-transition { transition: width 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-300 font-sans p-6 md:p-12 min-h-screen flex items-center justify-center">
+
+    <div class="max-w-4xl w-full bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-6 md:p-8">
+
+        <div class="mb-8 border-b border-slate-800 pb-4">
+            <h1 class="text-2xl font-bold text-white tracking-tight">Gravitational Routing Simulator</h1>
+            <p class="text-slate-400 text-sm mt-1">Comparing Categorical Distance vs. GPSL Structural Topology</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+
+            <div class="space-y-6">
+                <div class="space-y-4 bg-slate-950/50 p-5 border border-slate-800/50 rounded-lg">
+                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Agent State</h2>
+
+                    <div>
+                        <label class="flex justify-between text-sm font-medium text-slate-300 mb-1">
+                            <span>Mass (M)</span>
+                            <span id="massVal" class="text-indigo-400 font-mono">500</span>
+                        </label>
+                        <input type="range" id="mass" min="10" max="1000" value="500" class="w-full accent-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="flex justify-between text-sm font-medium text-slate-300 mb-1">
+                            <span>Current Load (L)</span>
+                            <span id="loadVal" class="text-indigo-400 font-mono">2</span>
+                        </label>
+                        <input type="range" id="load" min="0" max="10" value="2" class="w-full accent-indigo-500">
+                    </div>
+                </div>
+
+                <div class="space-y-4 bg-slate-950/50 p-5 border border-slate-800/50 rounded-lg">
+                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Topological Distance</h2>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Legacy Categorical (D_cat)</label>
+                        <select id="legacyDist" class="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none">
+                            <option value="0.0">0.0 (Domain Match)</option>
+                            <option value="0.5" selected>0.5 (Partial Match)</option>
+                            <option value="2.0">2.0 (Domain Mismatch)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="flex justify-between text-sm font-medium text-slate-300 mb-1 mt-4">
+                            <span>GPSL Structural (D_gpsl)</span>
+                            <span id="gpslDistVal" class="text-emerald-400 font-mono">1.2</span>
+                        </label>
+                        <input type="range" id="gpslDist" min="0.0" max="3.0" step="0.1" value="1.2" class="w-full accent-emerald-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col justify-center space-y-8">
+
+                <div>
+                    <h3 class="text-sm font-medium text-slate-400 mb-2">Legacy Priority Score</h3>
+                    <div class="flex items-end space-x-3 mb-2">
+                        <span id="legacyScore" class="text-4xl font-bold text-white font-mono">0.00</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-4 overflow-hidden border border-slate-700">
+                        <div id="legacyBar" class="bg-indigo-500 h-4 rounded-full bar-transition" style="width: 50%"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-medium text-slate-400 mb-2">GPSL Priority Score</h3>
+                    <div class="flex items-end space-x-3 mb-2">
+                        <span id="gpslScore" class="text-4xl font-bold text-emerald-400 font-mono">0.00</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-4 overflow-hidden border border-slate-700">
+                        <div id="gpslBar" class="bg-emerald-500 h-4 rounded-full bar-transition" style="width: 50%"></div>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-4 bg-slate-800/50 rounded border border-slate-700 font-mono text-xs text-slate-500">
+                    <p>Formula: P = M^α / ((D+1) * (L+1)^β)</p>
+                    <p>Constants: α = 0.8, β = 1.5</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GRAVDIC CONSTITUTIONAL CONSTANTS ---
+        const ALPHA = 0.8;
+        const BETA = 1.5;
+
+        // The core routing formula
+        function calculatePriority(mass, distance, load) {
+            const numerator = Math.pow(mass, ALPHA);
+            const denominator = (distance + 1) * Math.pow(load + 1, BETA);
+            const rawScore = numerator / denominator;
+            return parseFloat(rawScore.toFixed(4));
+        }
+
+        const inputs = {
+            mass: document.getElementById('mass'),
+            load: document.getElementById('load'),
+            legacyDist: document.getElementById('legacyDist'),
+            gpslDist: document.getElementById('gpslDist')
+        };
+
+        const displays = {
+            mass: document.getElementById('massVal'),
+            load: document.getElementById('loadVal'),
+            gpslDist: document.getElementById('gpslDistVal'),
+            legacyScore: document.getElementById('legacyScore'),
+            gpslScore: document.getElementById('gpslScore'),
+            legacyBar: document.getElementById('legacyBar'),
+            gpslBar: document.getElementById('gpslBar')
+        };
+
+        function updateSimulation() {
+            const m = parseFloat(inputs.mass.value);
+            const l = parseFloat(inputs.load.value);
+            const d_legacy = parseFloat(inputs.legacyDist.value);
+            const d_gpsl = parseFloat(inputs.gpslDist.value);
+
+            displays.mass.innerText = m;
+            displays.load.innerText = l;
+            displays.gpslDist.innerText = d_gpsl.toFixed(1);
+
+            const legacyScore = calculatePriority(m, d_legacy, l);
+            const gpslScore = calculatePriority(m, d_gpsl, l);
+
+            displays.legacyScore.innerText = legacyScore.toFixed(4);
+            displays.gpslScore.innerText = gpslScore.toFixed(4);
+
+            // Theoretical max: M=1000, L=0, D=0 → 1000^0.8 ≈ 251.19
+            const theoreticalMax = calculatePriority(1000, 0, 0);
+            const legacyPercent = Math.min((legacyScore / theoreticalMax) * 100, 100);
+            const gpslPercent = Math.min((gpslScore / theoreticalMax) * 100, 100);
+
+            displays.legacyBar.style.width = `${legacyPercent}%`;
+            displays.gpslBar.style.width = `${gpslPercent}%`;
+        }
+
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', updateSimulation);
+        });
+
+        updateSimulation();
+    </script>
+</body>
+</html>

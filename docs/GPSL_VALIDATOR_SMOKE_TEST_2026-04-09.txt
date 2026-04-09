@@ -1,0 +1,159 @@
+========================================================================
+GPSL Hybrid Validator — Smoke Test (Phase 0-B v0.2)
+========================================================================
+
+========================================================================
+SECTION 1 — Canonical reference ciphers (should all VALID)
+========================================================================
+
+founding: ✓ VALID (with warnings)
+  layers:    [1, 2]
+  operators: [':', '=', '→', '↓', '⊗']
+  nodes:     5
+  warnings:
+    - bare_state_fusion_at_pos_24_(rule_6_open_question)
+
+cogito: ✓ VALID
+  layers:    [1, 2]
+  operators: ['→']
+  nodes:     3
+
+ecclesiastes: ✓ VALID (with warnings)
+  layers:    [1]
+  operators: ['↺', '⊗', '⦸']
+  nodes:     5
+  warnings:
+    - advanced_operator_⦸_requires_legend
+
+grief: ✓ VALID (with warnings)
+  layers:    [1]
+  operators: [':', '::', '=', '↑', '→', '⊗']
+  nodes:     7
+  warnings:
+    - bare_state_fusion_at_pos_15_(rule_6_open_question)
+
+cave: ✓ VALID (with warnings)
+  layers:    [1, 2]
+  operators: [':', '::', '=', '↑', '→', '↛', '⤳', '⥀']
+  nodes:     8
+  warnings:
+    - derivational_op_→_after_::_in_expression_1_(v_class_context)
+    - advanced_operator_⤳_requires_legend
+    - advanced_operator_⥀_requires_legend
+
+========================================================================
+SECTION 2 — Minimal negative cases (should all INVALID)
+========================================================================
+
+empty: ✗ INVALID
+  layers:    []
+  operators: []
+  nodes:     0
+  ERRORS:
+    - empty_cipher
+
+no_nodes: ✗ INVALID
+  layers:    []
+  operators: [':', '::', '→', '↔', '⊗']
+  nodes:     0
+  ERRORS:
+    - no_nodes_found
+
+state_initiates_flow: ✗ INVALID
+  layers:    [1]
+  operators: ['→']
+  nodes:     3
+  ERRORS:
+    - state_initiates_→_at_pos_14
+
+state_recurs: ✗ INVALID
+  layers:    [1]
+  operators: ['↺']
+  nodes:     2
+  ERRORS:
+    - state_initiates_↺_at_pos_5
+
+nl_contamination: ✗ INVALID
+  layers:    [1]
+  operators: []
+  nodes:     1
+  ERRORS:
+    - nl_contamination_in_process_node_at_pos_0
+
+========================================================================
+SECTION 3 — Phase 0-B synthetic test cases (one per rule, pass + fail)
+========================================================================
+
+rule5_pass_clean_boundary: ✓ VALID
+  layers:    [1]
+  operators: [':', '::', '→']
+  nodes:     3
+  rationale: No → or ⊗ after the ::. Clean derivational termination.
+
+rule5_fail_strict_no_v_class: ✗ INVALID
+  layers:    [1]
+  operators: [':', '::', '→']
+  nodes:     4
+  ERRORS:
+    - derivational_op_→_after_::_in_expression_0
+  rationale: → after :: with no advanced operators. Strict slash.
+
+rule5_v_class_downgrade: ✓ VALID (with warnings)
+  layers:    [1]
+  operators: [':', '::', '→', '⥀']
+  nodes:     4
+  warnings:
+    - derivational_op_→_after_::_in_expression_0_(v_class_context)
+    - advanced_operator_⥀_requires_legend
+  rationale: → after :: BUT cipher contains ⥀ (advanced operator). V-class context downgrades to warning.
+
+rule7_pass_process_to_state: ✓ VALID
+  layers:    [1]
+  operators: ['→']
+  nodes:     2
+  rationale: Process initiates flow to state. Allowed.
+
+rule7_fail_state_initiates_flow: ✗ INVALID
+  layers:    [1]
+  operators: ['→']
+  nodes:     2
+  ERRORS:
+    - state_initiates_→_at_pos_9
+  rationale: State cannot actively cause a process. Type rule violation.
+
+rule7_fail_state_loops: ✗ INVALID
+  layers:    [1]
+  operators: ['↺']
+  nodes:     2
+  ERRORS:
+    - state_initiates_↺_at_pos_9
+  rationale: State cannot recur. Type rule violation.
+
+rule6_pass_bracketed_fusion: ✓ VALID
+  layers:    [1]
+  operators: ['→', '⊗']
+  nodes:     4
+  rationale: State fusion wrapped in [...] context bracket. Clean.
+
+rule6_warn_bare_fusion: ✓ VALID (with warnings)
+  layers:    [1]
+  operators: ['=', '⊗']
+  nodes:     3
+  warnings:
+    - bare_state_fusion_at_pos_8_(rule_6_open_question)
+  rationale: Bare {A} ⊗ {B} resolved with = (which is allowed after a state node, unlike → or ↺). Strict reading of rule 6 would slash; founding cipher uses the same bare-fusion pattern, so v0.1 treats as warning pending D'Artagnan clarification.
+
+vclass_pass_with_warnings: ✓ VALID (with warnings)
+  layers:    [1]
+  operators: ['↺', '⤳', '⦸']
+  nodes:     1
+  warnings:
+    - advanced_operator_⤳_requires_legend
+    - advanced_operator_⦸_requires_legend
+  rationale: Two advanced operators (⤳ and ⦸) and a void terminator. Should pass with warnings on both.
+
+========================================================================
+SMOKE TEST PASSED — all sections clean.
+  Section 1: 5 canonical ciphers VALID
+  Section 2: 5 negative cases correctly INVALID
+  Section 3: 9 synthetic Phase 0-B cases match expected behavior
