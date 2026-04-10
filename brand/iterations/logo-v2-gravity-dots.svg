@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- V2: Gravity Dots — like the Gemini reference but with dots
+       arranged as orbital mass points around the G aperture.
+       Two dots: one large (dominant mass), one small (challenger). -->
+  <rect width="400" height="400" fill="#020617"/>
+  <path
+    d="M 240 110 A 100 100 0 1 0 240 290 L 240 200 L 160 200"
+    fill="none"
+    stroke="#F8FAFC"
+    stroke-width="40"
+    stroke-linecap="square"
+    stroke-linejoin="miter"
+  />
+  <!-- Dominant mass -->
+  <circle cx="300" cy="160" r="16" fill="#F8FAFC"/>
+  <!-- Challenger mass -->
+  <circle cx="300" cy="240" r="8" fill="#F8FAFC"/>
+</svg>

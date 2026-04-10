@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- V7: Direct refinement of the Gemini SVG you liked.
+       Same structure (thick G + 4 dots in 2x2), slightly adjusted
+       proportions for better balance and rounder G arc. -->
+  <rect width="400" height="400" fill="#020617"/>
+  <path
+    d="M 230 120 A 100 100 0 1 0 230 280 L 230 200 L 150 200"
+    fill="none"
+    stroke="#F8FAFC"
+    stroke-width="48"
+    stroke-linecap="square"
+    stroke-linejoin="miter"
+  />
+  <circle cx="285" cy="160" r="14" fill="#F8FAFC"/>
+  <circle cx="285" cy="240" r="14" fill="#F8FAFC"/>
+  <circle cx="325" cy="160" r="14" fill="#F8FAFC"/>
+  <circle cx="325" cy="240" r="14" fill="#F8FAFC"/>
+</svg>

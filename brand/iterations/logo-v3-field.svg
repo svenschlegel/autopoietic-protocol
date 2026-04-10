@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- V3: Gravitational Field — thick G with three dots of decreasing
+       size, suggesting mass distribution / routing priority falloff.
+       The dots sit in the aperture gap like bodies in a gravity well. -->
+  <rect width="400" height="400" fill="#020617"/>
+  <path
+    d="M 240 110 A 100 100 0 1 0 240 290 L 240 200 L 160 200"
+    fill="none"
+    stroke="#F8FAFC"
+    stroke-width="40"
+    stroke-linecap="square"
+    stroke-linejoin="miter"
+  />
+  <circle cx="300" cy="145" r="14" fill="#F8FAFC"/>
+  <circle cx="300" cy="200" r="10" fill="#F8FAFC"/>
+  <circle cx="300" cy="248" r="6" fill="#F8FAFC"/>
+</svg>

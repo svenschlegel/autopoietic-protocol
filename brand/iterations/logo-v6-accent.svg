@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- V6: Accent — thick G with two dots using the brand colors.
+       Indigo = established mass, Emerald = new growth.
+       Tells the dual-mass story in the logo itself. -->
+  <rect width="400" height="400" fill="#020617"/>
+  <path
+    d="M 240 110 A 100 100 0 1 0 240 290 L 240 200 L 160 200"
+    fill="none"
+    stroke="#F8FAFC"
+    stroke-width="40"
+    stroke-linecap="square"
+    stroke-linejoin="miter"
+  />
+  <!-- Established mass (indigo) -->
+  <circle cx="300" cy="155" r="15" fill="#6366F1"/>
+  <!-- New growth (emerald) -->
+  <circle cx="300" cy="245" r="15" fill="#10B981"/>
+</svg>

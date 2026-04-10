@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- V5: Filled G — solid geometric letterform. No strokes, pure fill.
+       Classic monogram approach. The aperture (gap) is wide for legibility.
+       Slight asymmetry: bottom-right curves inward more than top-right,
+       the only nod to gravitational distortion. -->
+  <path
+    d="
+      M 140 52
+      A 58 58 0 1 0 140 148
+      L 140 138
+      A 48 48 0 1 1 140 62
+      L 140 52
+      Z
+      M 140 94
+      L 100 94
+      L 100 106
+      L 140 106
+      L 140 148
+      Q 130 143, 118 138
+      A 48 48 0 0 1 60 100
+      A 48 48 0 0 1 118 62
+      Q 130 57, 140 52
+      L 140 62
+      A 48 48 0 1 0 140 138
+      L 140 94
+      Z
+    "
+    fill="#F8FAFC"
+    fill-rule="evenodd"
+  />
+</svg>

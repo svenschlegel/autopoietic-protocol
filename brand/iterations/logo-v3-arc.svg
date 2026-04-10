@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- V3: Arc G — the most reduced version. Just the C-arc of the G plus
+       a short inward bar. Two strokes, nothing else. Brutally simple.
+       Reads as G at any size. -->
+  <g fill="none" stroke="#F8FAFC" stroke-width="14" stroke-linecap="round">
+    <!-- Main arc (C shape) -->
+    <path d="M 145 60 A 60 60 0 1 0 145 140"/>
+    <!-- Inward bar -->
+    <line x1="145" y1="100" x2="105" y2="100"/>
+  </g>
+</svg>

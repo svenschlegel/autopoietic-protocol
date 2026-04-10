@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- V4: Concentric G — the G shape formed by two concentric arcs with
+       a connecting bar. Hints at gravitational contour lines / topographic
+       mapping without being literal. Clean, geometric, distinctive. -->
+  <g fill="none" stroke-linecap="round">
+    <!-- Outer arc -->
+    <path
+      d="M 148 55 A 62 62 0 1 0 148 145"
+      stroke="#F8FAFC"
+      stroke-width="8"
+    />
+    <!-- Inner arc (tighter, same center) -->
+    <path
+      d="M 130 75 A 38 38 0 1 0 130 125"
+      stroke="#F8FAFC"
+      stroke-width="6"
+      opacity="0.5"
+    />
+    <!-- Bar connecting to center -->
+    <line x1="148" y1="100" x2="100" y2="100"
+      stroke="#F8FAFC"
+      stroke-width="8"
+    />
+  </g>
+</svg>

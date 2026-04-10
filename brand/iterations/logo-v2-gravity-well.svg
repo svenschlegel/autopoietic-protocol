@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- V2: Gravity Well G — the crossbar pulls inward like mass warping space.
+       Clean stroked path, no fills, no filters. The "gravity" is in the
+       geometry: the horizontal bar bends slightly downward toward center. -->
+  <path
+    d="
+      M 138 65
+      A 58 58 0 1 0 138 135
+      L 100 135
+      L 100 103
+      Q 115 100, 138 103
+    "
+    fill="none"
+    stroke="#F8FAFC"
+    stroke-width="11"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

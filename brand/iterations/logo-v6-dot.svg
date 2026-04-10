@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- V6: G + Mass Dot — clean stroked G with a single dot at center
+       representing the "mass" / gravity well core. The dot is the
+       protocol's identity: everything orbits mass. Minimal, memorable. -->
+  <g fill="none" stroke="#F8FAFC" stroke-width="12" stroke-linecap="round">
+    <!-- G arc -->
+    <path d="M 145 58 A 58 58 0 1 0 145 142"/>
+    <!-- Bar -->
+    <line x1="145" y1="100" x2="108" y2="100"/>
+  </g>
+  <!-- Mass core -->
+  <circle cx="100" cy="100" r="6" fill="#F8FAFC"/>
+</svg>
