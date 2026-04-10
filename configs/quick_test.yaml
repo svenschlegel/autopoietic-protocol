@@ -1,0 +1,55 @@
+experiment:
+  num_agents: 4
+  num_rounds: 5
+  payloads_per_round: 2
+  seed: 42
+  routing_algorithms:
+    - gravitational
+    - random
+
+agents:
+  default_model: "anthropic/claude-3.5-haiku"
+  judge_model: "anthropic/claude-3.5-haiku"
+  initial_mass: 1.0
+  max_load: 2
+  models:
+    - name: "haiku-1"
+      model: "anthropic/claude-3.5-haiku"
+      primary_domain: SEMANTIC
+    - name: "haiku-2"
+      model: "anthropic/claude-3.5-haiku"
+      primary_domain: DETERMINISTIC
+    - name: "gpt4o-mini-1"
+      model: "openai/gpt-4o-mini"
+      primary_domain: SPATIAL
+      secondary_domains: [DETERMINISTIC]
+    - name: "gpt4o-mini-2"
+      model: "openai/gpt-4o-mini"
+      primary_domain: TEMPORAL
+      secondary_domains: [SEMANTIC]
+
+payloads:
+  domain_weights:
+    SEMANTIC: 0.30
+    DETERMINISTIC: 0.30
+    SPATIAL: 0.20
+    TEMPORAL: 0.20
+  bounty_range: [5.0, 20.0]
+  difficulty_range: [0.3, 0.6]
+  execution_window: 60
+
+protocol:
+  alpha: 0.8
+  beta: 1.5
+  slash_rate: 0.05
+  quarantine_threshold: 5
+  sigma_min: 0.1
+  sigma_max: 3.0
+  quality_threshold: 0.5
+
+openrouter:
+  base_url: "https://openrouter.ai/api/v1"
+
+output:
+  dir: "./results"
+  plots: false

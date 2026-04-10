@@ -1,0 +1,80 @@
+experiment:
+  num_agents: 10
+  num_rounds: 50
+  payloads_per_round: 4
+  seed: 42
+  routing_algorithms:
+    - gravitational
+    - random
+    - round_robin
+    - elo
+    - equal_mass
+
+agents:
+  default_model: "anthropic/claude-3.5-haiku"
+  judge_model: "anthropic/claude-sonnet-4"
+  initial_mass: 1.0
+  max_load: 3
+  models:
+    - name: "haiku-1"
+      model: "anthropic/claude-3.5-haiku"
+      primary_domain: SEMANTIC
+    - name: "haiku-2"
+      model: "anthropic/claude-3.5-haiku"
+      primary_domain: DETERMINISTIC
+    - name: "gemini-flash-1"
+      model: "google/gemini-2.0-flash-001"
+      primary_domain: DETERMINISTIC
+      secondary_domains: [SPATIAL]
+    - name: "gemini-flash-2"
+      model: "google/gemini-2.0-flash-001"
+      primary_domain: SPATIAL
+    - name: "llama-1"
+      model: "meta-llama/llama-3.1-70b-instruct"
+      primary_domain: SEMANTIC
+      secondary_domains: [TEMPORAL]
+    - name: "llama-2"
+      model: "meta-llama/llama-3.1-70b-instruct"
+      primary_domain: TEMPORAL
+    - name: "gpt4o-mini-1"
+      model: "openai/gpt-4o-mini"
+      primary_domain: DETERMINISTIC
+      secondary_domains: [SEMANTIC]
+    - name: "gpt4o-mini-2"
+      model: "openai/gpt-4o-mini"
+      primary_domain: SPATIAL
+      secondary_domains: [DETERMINISTIC]
+    - name: "mistral-1"
+      model: "mistralai/mistral-large"
+      primary_domain: TEMPORAL
+      secondary_domains: [SEMANTIC]
+    - name: "qwen-1"
+      model: "qwen/qwen-2.5-72b-instruct"
+      primary_domain: SEMANTIC
+      secondary_domains: [DETERMINISTIC]
+
+payloads:
+  domain_weights:
+    SEMANTIC: 0.35
+    DETERMINISTIC: 0.30
+    SPATIAL: 0.20
+    TEMPORAL: 0.15
+  bounty_range: [1.0, 50.0]
+  difficulty_range: [0.3, 0.9]
+  execution_window: 60
+
+protocol:
+  alpha: 0.8
+  beta: 1.5
+  slash_rate: 0.05
+  quarantine_threshold: 5
+  sigma_min: 0.1
+  sigma_max: 3.0
+  quality_threshold: 0.5
+
+openrouter:
+  base_url: "https://openrouter.ai/api/v1"
+
+output:
+  dir: "./results"
+  plots: true

@@ -4,8 +4,5 @@ AUDIT_OUTREACH_EMAILS.md
 SOCIAL_POST_DRAFT.md
 TODO_NEXT.md
 
-# Simulation (private — publish when results tell a story)
-simulation/
-configs/
+# Simulation results (large JSON blobs, reproduce from code + configs)
 results/
-requirements-sim.txt

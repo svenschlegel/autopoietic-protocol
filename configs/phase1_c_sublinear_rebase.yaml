@@ -1,0 +1,104 @@
+# Phase 1 — Treatment C: SUBLINEAR + METABOLIC SEASON REBASE.
+#
+# §3.2 + §3.3. The actual V3.5-shipping configuration. Sublinear accrual
+# slows snowball formation; the season rebase at round 50 log-compresses
+# the accumulated routing mass to test whether the boundary causes
+# disruption (quality dips, routing chaos, agent participation collapse).
+#
+# season_length=50 with num_rounds=100 = exactly one mid-run rebase, per
+# spec §8.2: "Run two full simulated seasons (100 rounds total, with rebase
+# at round 50). Look for quality dips or routing chaos around the boundary."
+#
+# Expected behavior:
+#   - Pre-rebase (rounds 0–49): same trajectory as Treatment B
+#   - At end of round 49: routing mass log-compressed (governance untouched)
+#   - Post-rebase (rounds 50–99): the leaders from season 1 carry compressed
+#     advantage into season 2, so they should still tend to win, but with
+#     much smaller mass gaps and visibly different mid-tier participation
+#   - Quality should be roughly stable across the boundary; a quality dip
+#     would be the failure mode the spec asks us to look for
+#
+# Compare against B (same seed, no rebase) to attribute differences to the
+# rebase mechanism specifically.
+
+experiment:
+  num_agents: 10
+  num_rounds: 100
+  payloads_per_round: 4
+  seed: 42
+  routing_algorithms:
+    - gravitational
+
+agents:
+  default_model: "anthropic/claude-3.5-haiku"
+  judge_model: "anthropic/claude-sonnet-4"
+  initial_mass: 1.0
+  max_load: 3
+  models:
+    - name: "haiku-1"
+      model: "anthropic/claude-3.5-haiku"
+      primary_domain: SEMANTIC
+    - name: "haiku-2"
+      model: "anthropic/claude-3.5-haiku"
+      primary_domain: DETERMINISTIC
+    - name: "gemini-flash-1"
+      model: "google/gemini-2.0-flash-001"
+      primary_domain: DETERMINISTIC
+      secondary_domains: [SPATIAL]
+    - name: "gemini-flash-2"
+      model: "google/gemini-2.0-flash-001"
+      primary_domain: SPATIAL
+    - name: "llama-1"
+      model: "meta-llama/llama-3.1-70b-instruct"
+      primary_domain: SEMANTIC
+      secondary_domains: [TEMPORAL]
+    - name: "llama-2"
+      model: "meta-llama/llama-3.1-70b-instruct"
+      primary_domain: TEMPORAL
+    - name: "gpt4o-mini-1"
+      model: "openai/gpt-4o-mini"
+      primary_domain: DETERMINISTIC
+      secondary_domains: [SEMANTIC]
+    - name: "gpt4o-mini-2"
+      model: "openai/gpt-4o-mini"
+      primary_domain: SPATIAL
+      secondary_domains: [DETERMINISTIC]
+    - name: "mistral-1"
+      model: "mistralai/mistral-large"
+      primary_domain: TEMPORAL
+      secondary_domains: [SEMANTIC]
+    - name: "qwen-1"
+      model: "qwen/qwen-2.5-72b-instruct"
+      primary_domain: SEMANTIC
+      secondary_domains: [DETERMINISTIC]
+
+payloads:
+  domain_weights:
+    SEMANTIC: 0.35
+    DETERMINISTIC: 0.30
+    SPATIAL: 0.20
+    TEMPORAL: 0.15
+  bounty_range: [1.0, 50.0]
+  difficulty_range: [0.3, 0.9]
+  execution_window: 60
+
+protocol:
+  alpha: 0.8
+  beta: 1.5
+  slash_rate: 0.05
+  quarantine_threshold: 5
+  sigma_min: 0.1
+  sigma_max: 3.0
+  quality_threshold: 0.5
+  # === Treatment C: SUBLINEAR + REBASE — V3.5 shipping config ===
+  sublinear_accrual: true    # § §3.2 ON
+  season_length: 50          # § §3.3 ON — rebase at end of round 49
+  season_rebase_c: 100.0     # § log-compression scaling factor
+  decay_rate: 0.0            # § off — V3.5 ships δ=0
+
+openrouter:
+  base_url: "https://openrouter.ai/api/v1"
+
+output:
+  dir: "./results/phase1_c_sublinear_rebase"
+  plots: true
