@@ -1,8 +1,8 @@
 # GPSL × GravDic — Integration Proposal
 
-**Version:** 0.3 (revised after Phase 0-A empirical falsification)
-**Date:** 2026-04-08
-**Status:** Working draft — integration is greenlit, this is the design sketch
+**Version:** 0.3 (revised after Phase 0-A empirical falsification; Phase 1 validation annotations added 2026-04-09)
+**Date:** 2026-04-08 (original), 2026-04-09 (Phase 1 results annotated)
+**Status:** Working draft — integration is greenlit. Phase 0-A loop closed by Phase 1 empirical validation of the reform stack. Layer 3 unblocked; awaits Phase 2 (GPSL cipher encoding).
 **Author:** Sven Schlegel (GravDic / Autopoietic Protocol)
 **Re:** GPSL v2.2 Consolidated (6 April 2026)
 
@@ -12,6 +12,11 @@
 - **§4 Empirical validation plan updated** with Phase 0-A results (100% same-choice in the charitable variant).
 - **New §8.2 — "Phase 0-A: Falsification of v0.2 §8.2"** documents what was claimed, what the simulation actually showed, why, and what it means for V3.5.
 - **§6 Next steps reordered** — mass accrual reform is now a precondition for any fair test of Layer 3, ahead of GPSL encoding work.
+
+**Annotations added 2026-04-09 (Phase 1 results):**
+- **§4 Phase 1 section updated** with the actual empirical results: 4-treatment stack + 3-seed variance check, 49.5% Gini collapse at zero quality cost, reform stack validated across all tested conditions. See `docs/PHASE1_PROGRESS_REPORT_2026-04-09.md`.
+- **§6 Next steps updated** — Phase 1 complete; Phase 2 (Layer 3 with GPSL ciphers under the reformed mass distribution) is unblocked and next.
+- **§8.2 annotated** — the falsified claim led to a reform that has now been empirically validated. The loop the falsification opened has closed in the expected direction.
 
 **Changelog from v0.1:** Layer 2 rewritten as hybrid validator (V-class flag-not-slash). Layer 3 expanded with worked example, simulator citation, and the (now-falsified) anti-incumbency implication. Layer 4 specifies off-chain ratification / on-chain settlement. Layer 6 replaces hardcoded EscrowCore royalty with 0xSplits pattern. New §8 captures protocol-level implications.
 
@@ -213,7 +218,21 @@ The honest version of this proposal includes a way to falsify it. Before locking
 
 **Phase 0-B — Verification-only retrofit (deferred — needs text capture).** The original Phase 0 plan: take existing payload solutions, pass through a GPSL-style structural validator, measure correlation with judge scores. This is *not currently possible* because the simulation does not log submission text. To run Phase 0-B, the simulation needs to be re-instrumented to capture answers to disk. Cheap modification (~1 hour); deferred until we decide whether to re-run.
 
-**Phase 1 — Surgical re-run, one friction type, scaffolded agents, AND mass-accrual reform (~3-5 days, scope expanded after Phase 0-A).** Pick the friction type GPSL fits most natively — **Spatial**. Encode 20 Spatial payloads as GPSL ciphers (ideally with your review). Give every agent in the pool a GPSL v2.2 system prompt + 3-5 few-shot examples. **Reform mass accrual** to be sublinear or capped within a single domain — exact mechanism TBD, candidates include `delta_M = bounty × σ × decay(domain_mass)` where `decay` saturates at high mass, or per-domain caps tied to log of domain volume. Re-run all 5 routing algorithms with both old-D-old-accrual (control) and new-D-new-accrual (treatment). Measure:
+**Phase 1 — Mass accrual reform validation (✓ COMPLETE, 2026-04-09).** Ran as a 4-treatment graduated stack (V3.4 control → +sublinear → +sublinear+rebase → +decay) plus a 3-seed variance check on the control and the V3.5-shipping config. Full report: `docs/PHASE1_PROGRESS_REPORT_2026-04-09.md`.
+
+**Phase 1 headline results** (mean ± std across 3 seeds):
+
+- **Quality cost of reform:** +0.001 (literally zero) — the reform does not trade quality for fairness.
+- **Aggregate Gini:** 0.627 ± 0.040 (control) → 0.317 ± 0.016 (reform). −49.5% reduction. Bands separated at ~5× the sum of stds; robustly significant.
+- **Active-participation floor:** 4.7 ± 0.5 (control) → 6.0 ± 0.0 (reform) — deterministic across all tested seeds.
+- **Worst-domain top:median (naive):** from up to 10924× (control) down to ≤ 18.2× (reform).
+- **Worst-domain top:active-median:** ≤ 1.4× in all seeds under reform — effective parity within the active solver pool.
+- **Rebase boundary:** mean quality Δ = +0.006 across seeds; zero leadership changes across the boundary in any domain of any seed.
+- **Decay redundant:** Treatment D (δ=0.001) was statistically indistinguishable from Treatment C (sublinear+rebase alone); confirms shipping V3.5 with `δ=0` default.
+
+**Implication for this proposal.** The Phase 0-A falsification of v0.2 §8.2 is fully answered. Under V3.5's reformed mass distribution, worst-case top:median ratios are 8-15× naive and 1.0-1.4× among active solvers. **Continuous D in the bounded range [0, 3] is mathematically capable of flipping routing decisions at those ratios** (whereas at the 5000× ratios Phase 0-A measured it was not). Layer 3 is no longer blocked by the Phase 0-A failure mode.
+
+**The original Phase 1 plan (now historical, preserved for context):** ~3-5 days, pick Spatial as the most GPSL-native friction type, encode 20 Spatial payloads as GPSL ciphers with your review, scaffold the agent pool with GPSL v2.2 system prompts + few-shot examples, run a 2×2 of (old D × new accrual) vs (new D × new accrual). Pick the friction type GPSL fits most natively — **Spatial**. Encode 20 Spatial payloads as GPSL ciphers (ideally with your review). Give every agent in the pool a GPSL v2.2 system prompt + 3-5 few-shot examples. **Reform mass accrual** to be sublinear or capped within a single domain — exact mechanism TBD, candidates include `delta_M = bounty × σ × decay(domain_mass)` where `decay` saturates at high mass, or per-domain caps tied to log of domain volume. Re-run all 5 routing algorithms with both old-D-old-accrual (control) and new-D-new-accrual (treatment). Measure:
 
 1. **Judge noise:** variance of judge scores on identical structural targets — does GPSL encoding reduce it?
 2. **Parser catch rate:** what fraction of failures does structural validation catch *before* the judge sees them?
@@ -240,11 +259,14 @@ The honest version of this proposal includes a way to falsify it. Before locking
 
 1. ~~Phase 0 — verification-only retrofit~~ — **discovered impossible without text capture; Phase 0-A run instead** (see §4 and §8.2).
 2. ~~Phase 0-A — retrospective continuous-distance routing analysis~~ — **✓ COMPLETE 2026-04-08, Layer 3 falsified-without-mass-reform**.
-3. ~~Mass-accrual reform spec (blocks Phase 1)~~ — **✓ DRAFTED 2026-04-09** at `docs/MASS_ACCRUAL_REFORM_v0.1.md`. Foundational change is the **Dual-Mass Architecture** (split permanent Governance Mass from cyclical Routing Mass). Four reform mechanisms ship as a stack: operator-level fluency, sublinear accrual, Metabolic Season rebase, background decay infrastructure. Implementation order and Phase 1 2×2 design specified in §5 and §8 of that doc. Read it alongside this proposal.
-4. **Re-instrument simulation to log submission text (~1 hour).** Cheap modification, unlocks Phase 0-B (verification-only retrofit on Layer 2) and provides text needed to compute operator-level fluency profiles in Phase 1.
-5. **Phase 0-B — verification-only retrofit (~1 day, after re-instrumentation).** Take the next simulation run's solutions, pass through a GPSL-style structural validator, measure correlation with judge scores. Tests Layer 2 (verification) without needing mass-accrual reform.
-6. **Phase 1 — surgical re-run with GPSL ciphers + mass-accrual reform (~3-5 days).** Spatial slice, scaffolded agents, both routing regimes (categorical vs continuous D), both accrual regimes (current vs reformed). 2×2 design. Decision point on V3.5 spec follows.
-7. **Decision point** — if Phase 1 (with reform) shows continuous D produces meaningfully different and better routing, write V3.5 spec including both Layer 3 and the accrual reform. If Phase 1 still shows null effect under reform, narrow Layer 3 to operator-level fluency only and revisit.
+3. ~~Mass-accrual reform spec (blocks Phase 1)~~ — **✓ DRAFTED 2026-04-09** at `docs/MASS_ACCRUAL_REFORM_v0.1.md`. Foundational change is the **Dual-Mass Architecture** (split permanent Governance Mass from cyclical Routing Mass). Four reform mechanisms ship as a stack: operator-level fluency, sublinear accrual, Metabolic Season rebase, background decay infrastructure.
+4. ~~Re-instrument simulation to log submission text~~ — **✓ DONE 2026-04-09.** `prompt`, `answer`, `expected_answer`, `scoring_rubric` now captured per payload in `results.json`.
+5. ~~Phase 0-B — verification-only retrofit~~ — deferred until Layer 2 implementation; remains a cheap future experiment, not currently on the critical path.
+6. ~~Phase 1 — surgical re-run with GPSL ciphers + mass-accrual reform~~ — **✓ COMPLETE 2026-04-09** as the accrual-axis-only variant (the D axis requires GPSL ciphers, deferred to Phase 2). Results in `docs/PHASE1_PROGRESS_REPORT_2026-04-09.md`: the reform stack reduces aggregate Gini by 49.5% at zero quality cost, with deterministic 6/10 participation floor, across 3 independent seeds. Decay at δ=0.001 is empirically redundant on top of sublinear+rebase.
+7. ~~Decision point — write V3.5 spec~~ — **✓ DONE 2026-04-09.** V3.5 §5.2 rewrite standalone at `docs/WHITEPAPER_V3.5_SECTION_5.2.md`. Mass Accrual Reform spec status updated to "empirically validated" with Phase 1 §11 added.
+8. **Phase 2 — Layer 3 under the reformed mass distribution (next).** Phase 1 made Layer 3 viable by collapsing per-domain top:median ratios from 4 orders of magnitude to 1 order of magnitude. Phase 2 now tests whether continuous D (computed from operator-level fluency profiles derived from GPSL-encoded payload solutions) produces the routing differentiation v0.2 hypothesized. Requires: GPSL cipher encoding of ~20 Spatial payloads (with D'Artagnan review), scaffolded agent prompts with GPSL v2.2 system message + few-shot examples, and the reformed mass-accrual infrastructure already in place. Estimated ~3-5 days once GPSL cipher encoding lands.
+9. **D'Artagnan headline update.** Short message on the Phase 1 result (drafted, pending send). The v2.2 V-class stance and the operator vocabulary are load-bearing for the reform's framing; he should hear the empirical result before it becomes public.
+10. **V3.5 whitepaper full compilation.** §5.2 rewrite is done standalone; a full v3.5 whitepaper merge pulls it in alongside the other pending V3.5 changes (V4 Capillary Cluster roadmap notes, integration proposal cross-references). Not on the critical path; can wait until audit feedback arrives.
 
 GravDic landing page work proceeds in parallel.
 
