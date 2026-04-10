@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- GravDic logo — thick geometric G with dual-mass accent dots.
+       Indigo = established/governance mass. Emerald = new growth/routing mass.
+       Transparent background for flexible use. -->
+  <path
+    d="M 240 110 A 100 100 0 1 0 240 290 L 240 200 L 160 200"
+    fill="none"
+    stroke="#F8FAFC"
+    stroke-width="40"
+    stroke-linecap="square"
+    stroke-linejoin="miter"
+  />
+  <circle cx="300" cy="155" r="15" fill="#6366F1"/>
+  <circle cx="300" cy="245" r="15" fill="#10B981"/>
+</svg>

@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 500" width="1500" height="500">
+  <defs>
+    <filter id="glow-indigo" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feFlood flood-color="#6366F1" flood-opacity="0.3"/>
+      <feComposite in2="blur" operator="in" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="glow-emerald" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#10B981" flood-opacity="0.25"/>
+      <feComposite in2="blur" operator="in" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="soft-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1500" height="500" fill="#020617"/>
+
+  <!-- Subtle grid lines -->
+  <g stroke="#334155" stroke-width="0.5" opacity="0.3">
+    <line x1="0" y1="125" x2="1500" y2="125"/>
+    <line x1="0" y1="250" x2="1500" y2="250"/>
+    <line x1="0" y1="375" x2="1500" y2="375"/>
+  </g>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- LEFT SIDE: V3.4 Monopoly Regime        -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- Section label -->
+  <text x="325" y="60" font-family="'JetBrains Mono', monospace" font-size="14" fill="#94A3B8" text-anchor="middle" letter-spacing="2">V3.4 REGIME</text>
+
+  <!-- Ambient glow behind dominant node -->
+  <circle cx="325" cy="245" r="80" fill="#6366F1" opacity="0.06" filter="url(#soft-glow)"/>
+
+  <!-- Dominant agent — massive circle -->
+  <circle cx="325" cy="245" r="72" fill="none" stroke="#6366F1" stroke-width="2" opacity="0.8" filter="url(#glow-indigo)"/>
+  <circle cx="325" cy="245" r="72" fill="#6366F1" opacity="0.12"/>
+  <circle cx="325" cy="245" r="4" fill="#6366F1" opacity="0.9"/>
+
+  <!-- Mass label on dominant node -->
+  <text x="325" y="240" font-family="'JetBrains Mono', monospace" font-size="11" fill="#F8FAFC" text-anchor="middle" opacity="0.9">mass: 9726</text>
+  <text x="325" y="256" font-family="'JetBrains Mono', monospace" font-size="10" fill="#94A3B8" text-anchor="middle" opacity="0.7">monopolist</text>
+
+  <!-- Dormant agents — tiny dots scattered around -->
+  <circle cx="180" cy="150" r="3" fill="#94A3B8" opacity="0.3"/>
+  <circle cx="460" cy="170" r="3" fill="#94A3B8" opacity="0.3"/>
+  <circle cx="200" cy="340" r="3" fill="#94A3B8" opacity="0.3"/>
+  <circle cx="440" cy="350" r="3" fill="#94A3B8" opacity="0.3"/>
+  <circle cx="160" cy="250" r="3" fill="#94A3B8" opacity="0.3"/>
+  <circle cx="490" cy="260" r="3" fill="#94A3B8" opacity="0.3"/>
+  <circle cx="250" cy="130" r="2.5" fill="#94A3B8" opacity="0.25"/>
+  <circle cx="400" cy="380" r="2.5" fill="#94A3B8" opacity="0.25"/>
+  <circle cx="230" cy="390" r="2.5" fill="#94A3B8" opacity="0.25"/>
+
+  <!-- Dormant label -->
+  <text x="485" y="175" font-family="'JetBrains Mono', monospace" font-size="9" fill="#94A3B8" opacity="0.5">mass: 1</text>
+
+  <!-- Ratio annotation -->
+  <text x="325" y="440" font-family="'JetBrains Mono', monospace" font-size="13" fill="#94A3B8" text-anchor="middle">ratio 9726:1 | 4 active agents</text>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- CENTER: Divider                         -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- Vertical divider line -->
+  <line x1="750" y1="80" x2="750" y2="420" stroke="#334155" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- Arrow -->
+  <g fill="#F8FAFC" opacity="0.6">
+    <polygon points="740,245 720,235 720,255"/>
+    <polygon points="760,245 780,255 780,235"/>
+  </g>
+
+  <!-- Divider label -->
+  <text x="750" y="460" font-family="'Inter', 'Geist', sans-serif" font-size="12" fill="#F8FAFC" text-anchor="middle" font-weight="600" letter-spacing="1">METABOLIC SEASON REBASE</text>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- RIGHT SIDE: V3.5 Compressed Regime      -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- Section label -->
+  <text x="1125" y="60" font-family="'JetBrains Mono', monospace" font-size="14" fill="#94A3B8" text-anchor="middle" letter-spacing="2">V3.5 REGIME</text>
+
+  <!-- Active agent nodes — 7 moderately sized, distributed -->
+
+  <!-- Agent 1 — largest but reasonable (established) -->
+  <circle cx="1050" cy="200" r="28" fill="none" stroke="#6366F1" stroke-width="1.5" opacity="0.8" filter="url(#glow-indigo)"/>
+  <circle cx="1050" cy="200" r="28" fill="#6366F1" opacity="0.1"/>
+  <circle cx="1050" cy="200" r="3" fill="#6366F1" opacity="0.9"/>
+  <text x="1050" y="197" font-family="'JetBrains Mono', monospace" font-size="8" fill="#F8FAFC" text-anchor="middle" opacity="0.8">15</text>
+
+  <!-- Agent 2 — established -->
+  <circle cx="1200" cy="180" r="24" fill="none" stroke="#6366F1" stroke-width="1.5" opacity="0.8" filter="url(#glow-indigo)"/>
+  <circle cx="1200" cy="180" r="24" fill="#6366F1" opacity="0.1"/>
+  <circle cx="1200" cy="180" r="3" fill="#6366F1" opacity="0.9"/>
+  <text x="1200" y="177" font-family="'JetBrains Mono', monospace" font-size="8" fill="#F8FAFC" text-anchor="middle" opacity="0.8">13</text>
+
+  <!-- Agent 3 — mid-range -->
+  <circle cx="1130" cy="300" r="22" fill="none" stroke="#6366F1" stroke-width="1.5" opacity="0.7"/>
+  <circle cx="1130" cy="300" r="22" fill="#6366F1" opacity="0.08"/>
+  <circle cx="1130" cy="300" r="2.5" fill="#6366F1" opacity="0.8"/>
+  <text x="1130" y="297" font-family="'JetBrains Mono', monospace" font-size="8" fill="#F8FAFC" text-anchor="middle" opacity="0.8">10</text>
+
+  <!-- Agent 4 — newer, emerald -->
+  <circle cx="970" cy="290" r="20" fill="none" stroke="#10B981" stroke-width="1.5" opacity="0.8" filter="url(#glow-emerald)"/>
+  <circle cx="970" cy="290" r="20" fill="#10B981" opacity="0.08"/>
+  <circle cx="970" cy="290" r="2.5" fill="#10B981" opacity="0.9"/>
+  <text x="970" y="287" font-family="'JetBrains Mono', monospace" font-size="8" fill="#F8FAFC" text-anchor="middle" opacity="0.8">7</text>
+
+  <!-- Agent 5 — newer, emerald -->
+  <circle cx="1260" cy="300" r="18" fill="none" stroke="#10B981" stroke-width="1.5" opacity="0.8" filter="url(#glow-emerald)"/>
+  <circle cx="1260" cy="300" r="18" fill="#10B981" opacity="0.08"/>
+  <circle cx="1260" cy="300" r="2.5" fill="#10B981" opacity="0.9"/>
+  <text x="1260" y="297" font-family="'JetBrains Mono', monospace" font-size="8" fill="#F8FAFC" text-anchor="middle" opacity="0.8">5</text>
+
+  <!-- Agent 6 — new entrant, emerald -->
+  <circle cx="1040" cy="370" r="15" fill="none" stroke="#10B981" stroke-width="1.5" opacity="0.7"/>
+  <circle cx="1040" cy="370" r="15" fill="#10B981" opacity="0.06"/>
+  <circle cx="1040" cy="370" r="2" fill="#10B981" opacity="0.8"/>
+  <text x="1040" y="367" font-family="'JetBrains Mono', monospace" font-size="8" fill="#F8FAFC" text-anchor="middle" opacity="0.8">3</text>
+
+  <!-- Agent 7 — newest, emerald -->
+  <circle cx="1180" cy="380" r="13" fill="none" stroke="#10B981" stroke-width="1.5" opacity="0.7"/>
+  <circle cx="1180" cy="380" r="13" fill="#10B981" opacity="0.06"/>
+  <circle cx="1180" cy="380" r="2" fill="#10B981" opacity="0.8"/>
+  <text x="1180" y="377" font-family="'JetBrains Mono', monospace" font-size="8" fill="#F8FAFC" text-anchor="middle" opacity="0.8">1</text>
+
+  <!-- Ratio annotation -->
+  <text x="1125" y="440" font-family="'JetBrains Mono', monospace" font-size="13" fill="#94A3B8" text-anchor="middle">ratio 15:1 | 7 active agents</text>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- TOP: Key metrics bar                    -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <g font-family="'JetBrains Mono', monospace" font-size="15" text-anchor="middle">
+    <text x="375" y="490" fill="#6366F1" font-weight="500">9726:1</text>
+    <text x="480" y="490" fill="#94A3B8">-></text>
+    <text x="560" y="490" fill="#10B981" font-weight="500">15:1</text>
+
+    <text x="800" y="490" fill="#6366F1" font-weight="500">Gini 0.685</text>
+    <text x="930" y="490" fill="#94A3B8">-></text>
+    <text x="1040" y="490" fill="#10B981" font-weight="500">0.257</text>
+
+    <text x="1280" y="490" fill="#F8FAFC" font-weight="500">Quality cost: 0%</text>
+  </g>
+</svg>

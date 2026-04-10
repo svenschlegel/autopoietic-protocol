@@ -1,0 +1,50 @@
+/*
+ * GravDic — Design Tokens
+ * Topological minimalism palette
+ */
+
+:root {
+  /* ── Backgrounds ── */
+  --gd-bg-primary:     #020617;   /* deep slate — main background */
+  --gd-bg-surface:     #0F172A;   /* slightly lifted surface */
+  --gd-bg-elevated:    #1E293B;   /* cards, modals */
+
+  /* ── Foreground / Text ── */
+  --gd-text-primary:   #F8FAFC;   /* ghost white */
+  --gd-text-secondary: #94A3B8;   /* slate 400 — muted */
+  --gd-text-tertiary:  #64748B;   /* slate 500 — very muted */
+
+  /* ── Accents ── */
+  --gd-accent-indigo:  #6366F1;   /* established mass, primary CTA */
+  --gd-accent-emerald: #10B981;   /* growth, new fluency */
+
+  /* ── Semantic ── */
+  --gd-error:          #EF4444;   /* destructive actions only */
+  --gd-warning:        #F59E0B;
+  --gd-info:           #6366F1;   /* aliases indigo */
+
+  /* ── Borders ── */
+  --gd-border-subtle:  #334155;   /* slate 700 */
+  --gd-border-default: #475569;   /* slate 600 */
+
+  /* ── Typography ── */
+  --gd-font-display:   'Inter', 'Geist', system-ui, sans-serif;
+  --gd-font-body:      'Inter', system-ui, sans-serif;
+  --gd-font-mono:      'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* ── Spacing scale (4px base) ── */
+  --gd-space-1:  0.25rem;
+  --gd-space-2:  0.5rem;
+  --gd-space-3:  0.75rem;
+  --gd-space-4:  1rem;
+  --gd-space-6:  1.5rem;
+  --gd-space-8:  2rem;
+  --gd-space-12: 3rem;
+  --gd-space-16: 4rem;
+
+  /* ── Border radius ── */
+  --gd-radius-sm:  0.25rem;
+  --gd-radius-md:  0.5rem;
+  --gd-radius-lg:  0.75rem;
+  --gd-radius-full: 9999px;
+}
