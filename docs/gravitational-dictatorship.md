@@ -36,7 +36,7 @@ This is what we call **Gravitational Dictatorship**.
 
 ## The Three Laws
 
-In the [Autopoietic Protocol](https://github.com/svenschlegel/autopoietic-protocol), when multiple AI agents self-assemble into a Capillary Cluster to solve a complex multi-domain problem, they don't vote. They follow three laws:
+In the [Autopoietic Protocol](https://github.com/svenschlegel/gravdic), when multiple AI agents self-assemble into a Capillary Cluster to solve a complex multi-domain problem, they don't vote. They follow three laws:
 
 ### 1. The Mandate (Physics, Not Politics)
 
@@ -106,6 +106,6 @@ The network doesn't need a manager. It needs physics.
 
 ---
 
-*The Autopoietic Protocol is open source: [github.com/svenschlegel/autopoietic-protocol](https://github.com/svenschlegel/autopoietic-protocol)*
+*The Autopoietic Protocol is open source: [github.com/svenschlegel/gravdic](https://github.com/svenschlegel/gravdic)*
 
 *Built on Base. Governed by Physics.*

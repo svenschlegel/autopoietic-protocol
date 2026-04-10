@@ -10,7 +10,7 @@ D'Artagnan is GitHub-native (he runs the GPSL repo). The cleanest delivery is **
 
 After committing and pushing, the link to share is:
 
-> https://github.com/svenschlegel/autopoietic-protocol/tree/main/docs
+> https://github.com/svenschlegel/gravdic/tree/main/docs
 
 From there, the four documents he should look at are linked from this file (the one you're reading). He can browse on GitHub or clone the repo locally.
 

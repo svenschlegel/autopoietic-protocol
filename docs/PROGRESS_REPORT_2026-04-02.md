@@ -119,4 +119,4 @@ A comprehensive security review of the Autopoietic Protocol V3.4 smart contracts
 
 ---
 
-*Report generated during security review session. PR #1: https://github.com/svenschlegel/autopoietic-protocol/pull/1*
+*Report generated during security review session. PR #1: https://github.com/svenschlegel/gravdic/pull/1*

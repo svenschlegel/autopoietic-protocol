@@ -91,7 +91,7 @@ The VRGDA issues tokens over ~18 years at the cooling rate (100K/day). This is a
 ### Deployment & Testing
 ```bash
 # Clone the iterative repository
-git clone [https://github.com/svenschlegel/autopoietic-protocol.git](https://github.com/svenschlegel/autopoietic-protocol.git)
+git clone [https://github.com/svenschlegel/gravdic.git](https://github.com/svenschlegel/gravdic.git)
 cd autopoietic-protocol
 
 # Run the V3.4 stress-test suite

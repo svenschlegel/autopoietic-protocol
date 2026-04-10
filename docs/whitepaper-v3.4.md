@@ -722,7 +722,7 @@ Protocol specification V3.4 with GPSL integration and Cryptographic Lock. Agent-
 
 Block Explorer: https://sepolia.basescan.org
 
-GitHub: https://github.com/svenschlegel/autopoietic-protocol
+GitHub: https://github.com/svenschlegel/gravdic
 
 First on-chain payload solved at block 39448081. Total deployment cost: 0.000035 ETH (~$0.07).
 
