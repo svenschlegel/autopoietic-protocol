@@ -1,9 +1,10 @@
 # Multi-Agent Collaboration — Phase 2.5 Experiment Spec
 
-**Date:** 2026-04-12
+**Date:** 2026-04-12 (revised after peer review)
 **Status:** Design spec for next engineering session. Tests the core hypothesis that multi-agent collaboration produces better results than single-agent routing on complex tasks.
 **Depends on:** V3.5 simulation framework (done), OpenRouter API key (need fresh one)
 **Whitepaper reference:** §7 (Capillary Clusters), §7.2 (Lifecycle), §7.5 (Adversarial Synthesis)
+**Estimated cost:** ~$30-40 (revised upward from $10-15 after token analysis of C4 adversarial rounds)
 
 ---
 
@@ -43,10 +44,19 @@ Create 10 tasks that genuinely require two or more friction types to solve well.
 For each composite payload, run three conditions:
 
 **Condition 1 — Single agent (control).**
-Route the entire composite payload to the single highest-priority agent via the gravitational formula (standard V3.5 routing). The agent gets the whole task and produces one answer.
+Route the entire composite payload to the single highest-priority agent via a **Composite Priority Score**. Each composite payload carries `domain_weights` (e.g., Task A = `{SEMANTIC: 0.7, DETERMINISTIC: 0.3}`). The router computes:
+
+```
+P_composite = Σ(w_d × M_route_d^α) / ((D_weighted + 1)(L + 1)^β)
+where D_weighted = Σ(w_d × D_d)
+```
+
+This ensures the "best generalist" for the specific task mix is selected — not just the agent with the highest aggregate mass, who might be a semantic specialist routed to a mostly-deterministic task. Without this, C1 would be an unfair baseline.
 
 **Condition 2 — Independent specialists (no communication).**
 Decompose the payload into sub-tasks by friction type. Route each sub-task to the best-fit specialist via the gravitational formula. Each specialist solves independently. Their outputs are concatenated (not fused) and submitted as the composite answer. This tests whether specialization alone helps, even without communication.
+
+**Important: the judge rubric for C2 must not penalize stylistic disjointedness.** Concatenated outputs from different models will never read as a unified document. The C2 judge scores "Coherence" as *logical consistency* (do the parts contradict each other?) not *stylistic coherence* (does it read as one voice?). Without this adjustment, C2 becomes a strawman that makes C3 look artificially superior.
 
 **Condition 3 — Collaborative specialists (the Cluster).**
 Same decomposition and routing as Condition 2, but after specialists solve independently, their outputs are fed to the highest-mass agent (the Seed) with explicit fusion instructions. The Seed sees all specialist outputs + the original composite task and produces a single fused answer. This tests whether structured fusion adds value on top of specialization.
@@ -63,6 +73,8 @@ For each composite payload × each condition, the LLM judge scores the complete 
 3. **Coherence** (0-1): Is the final answer a unified, coherent response? Or does it feel like stapled-together parts? (Relevant for Conditions 2-4.)
 4. **Completeness** (0-1): Did the answer address every sub-task, or did it skip/shortcut some?
 
+5. **Revision delta** (C4 only): Score_C4 - Score_C3 on the same judge. Positive = adversarial loop helped. Negative = critique degradation. **This must be tracked explicitly** — scoring only the final C4 output would hide whether the adversarial step was constructive or destructive.
+
 The key comparison: does Condition 3 (collaborative fusion) beat Condition 1 (single agent) on overall quality? By how much? Does Condition 4 (adversarial synthesis) beat Condition 3? Does Condition 2 (independent, no fusion) beat Condition 1?
 
 ---
@@ -75,7 +87,10 @@ The key comparison: does Condition 3 (collaborative fusion) beat Condition 1 (si
 
 `simulation/payloads/composite_templates.py` (new, ~200 lines)
 - 10 composite payload templates, each tagged with 2-3 friction types
-- `CompositePayload` dataclass extending `SimPayload` with `sub_domains: list[FrictionType]` and `sub_prompts: dict[FrictionType, str]` (the decomposed sub-task per domain)
+- `CompositePayload` dataclass extending `SimPayload` with:
+  - `sub_domains: list[FrictionType]` — the friction types this payload spans
+  - `sub_prompts: dict[FrictionType, str]` — the decomposed sub-task per domain
+  - `domain_weights: dict[FrictionType, float]` — how much each domain contributes to the composite task (must sum to 1.0; used by C1 router for fair generalist selection)
 - Each template includes: the full composite prompt, the per-domain decomposed prompts, and a composite scoring rubric for the judge
 - The decomposition is authored by hand (not automated) — we control what each specialist sees
 
@@ -173,8 +188,9 @@ Review how the Fusion Agent used your {domain} output. Identify any errors, misi
 
 Config: `configs/composite_test.yaml` (new)
 - Same agent pool as Phase 1
-- 10 composite payloads, 4 conditions each = 40 "runs" but actually ~80-120 LLM calls (each condition involves 1-4 agent calls per payload)
-- Estimated cost: ~$10-15
+- 10 composite payloads, 4 conditions each = 40 "runs" but actually ~80-120 LLM calls (each condition involves 1-4 agent calls per payload, plus judge scoring)
+- **Token budget warning:** C4 (adversarial) stacks the original prompt + 2-3 specialist outputs + draft fusion + 2-3 critiques + revision prompt in a single context window. For triple-composite payloads this can reach 8-12K tokens per call. The runner must enforce truncation or summarization if specialist outputs exceed a per-output token cap (e.g., 1500 tokens per specialist).
+- Estimated cost: **~$30-40** (revised from $10-15 after accounting for C4 token depth and judge calls on both C3 draft and C4 final)
 
 ### 2.2 What this doesn't build (deferred to V4)
 
@@ -242,16 +258,19 @@ The key advantage of the physics-based approach: it's **permissionless and self-
 
 ## 5. Implementation order for next session
 
-1. Write 10 composite payload templates (~2 hours)
-2. Build `CompositePayload` dataclass + decomposition logic (~1 hour)
-3. Build `CompositeExperimentRunner` with all 4 conditions (~3 hours)
-4. Write the fusion, critique, and revision prompt templates (~1 hour)
-5. Write `composite_compare.py` analysis script (~1 hour)
-6. Create fresh OpenRouter API key
-7. Run the experiment (~30 minutes, ~$10-15)
-8. Analyze results and write up findings
+1. Write 10 composite payload templates with `domain_weights` (~2 hours)
+2. Build `CompositePayload` dataclass with `domain_weights` + decomposition logic (~1 hour)
+3. Build `CompositeRouter` with weighted composite priority score for C1 (~1 hour)
+4. Build `CompositeExperimentRunner` with all 4 conditions (~3 hours)
+5. Write the fusion, critique, and revision prompt templates (~1 hour)
+6. Write condition-specific judge rubrics (C2 scores "logical consistency" not "stylistic coherence") (~30 min)
+7. Write `composite_compare.py` analysis script with revision delta tracking (Score_C4 - Score_C3) (~1.5 hours)
+8. Add per-output token truncation to prevent C4 context overflow (~30 min)
+9. Create fresh OpenRouter API key
+10. Run the experiment (~45 minutes, ~$30-40)
+11. Analyze results and write up findings
 
-**Total: ~1 day of focused engineering + ~30 minutes of simulation runtime.**
+**Total: ~1.5 days of focused engineering + ~45 minutes of simulation runtime.**
 
 ---
 
