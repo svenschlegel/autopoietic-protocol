@@ -79,6 +79,14 @@ class SimAgent:
         self.total_earned = 0.0
         self.solve_history: list[dict] = []
 
+        # Phase 2 — per-operator GPSL fluency tracking.
+        # Keys are operator strings (e.g., "→", "⥀", "⦸").
+        # Values are {"count": int, "quality_sum": float}.
+        # Updated after each solve based on which operators the payload
+        # required and the quality score achieved. Used by the continuous-D
+        # routing formula in simulation/routing/fluency.py.
+        self.operator_fluency: dict[str, dict] = {}
+
     @property
     def aggregate_mass(self) -> float:
         """Sum of routing mass across domains. Backwards-compat alias."""
@@ -103,6 +111,19 @@ class SimAgent:
     def domain_governance_mass(self, domain: FrictionType) -> float:
         return self.gov_mass.get(domain, 0.0)
 
+    def update_operator_fluency(self, operators: list[str], quality: float) -> None:
+        """Record operator-level fluency after a solve.
+
+        Called after each successful payload solve with the list of GPSL
+        operators the payload required and the quality score achieved.
+        Builds the fluency profile used by the continuous-D router.
+        """
+        for op in operators:
+            if op not in self.operator_fluency:
+                self.operator_fluency[op] = {"count": 0, "quality_sum": 0.0}
+            self.operator_fluency[op]["count"] += 1
+            self.operator_fluency[op]["quality_sum"] += quality
+
     def topographic_distance(self, domain: FrictionType) -> float:
         """Distance from agent's specialization to the payload's domain."""
         if domain == self.primary_domain:
@@ -115,6 +136,7 @@ class SimAgent:
         """Reset state for a new experiment run."""
         self.mass = {ft: initial_mass for ft in FrictionType}
         self.gov_mass = {ft: initial_mass for ft in FrictionType}
+        self.operator_fluency = {}
         self.current_load = 0
         self.consecutive_failures = 0
         self.is_quarantined = False

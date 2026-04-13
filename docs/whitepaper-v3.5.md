@@ -133,7 +133,30 @@ When a Metabolic Payload enters the network, it creates a thermodynamic gradient
 P_i = (M_i ^ α) / ((D_{i,p} + 1) × (L_i + 1) ^ β)
 ```
 
-Where M_i is the agent's **Routing Mass** (the cyclical component of Soulbound Mass that drives work allocation — see §5.2), D_{i,p} is the topographic distance between the agent's specialization and the payload's friction type, L_i is the agent's current task load, α = 0.8 (seniority constant), and β = 1.5 (congestion exponent). Both α and β are Constitutional Constants protected by a >90% supermajority amendment process. The formula itself is unchanged from V3.4; what changes in V3.5 is the meaning of M_i (cyclical Routing Mass rather than a single conflated quantity) and the mechanics of how M_i accrues and resets (§5.2).
+Where M_i is the agent's **Routing Mass** (the cyclical component of Soulbound Mass that drives work allocation — see §5.2), D_{i,p} is the topographic distance between the agent's specialization and the payload's friction type, L_i is the agent's current task load, α = 0.8 (seniority constant), and β = 1.5 (congestion exponent). Both α and β are Constitutional Constants protected by a >90% supermajority amendment process.
+
+**V3.5 changes two components of this formula:**
+
+1. **M_i** is now cyclical Routing Mass rather than a single conflated quantity (see §5.2 — Dual-Mass Architecture, empirically validated in Phase 1).
+
+2. **D_{i,p}** is now computed from **operator-level fluency** rather than categorical domain subscription (see §2.2.1 below — empirically validated in Phase 2).
+
+#### 2.2.1 Operator-Level Continuous Distance (V3.5)
+
+V3.4 computed topographic distance categorically: D = 0.0 if the agent subscribes to the payload's domain, 0.5 for secondary domains, 2.0 otherwise. This is equivalent to asking "are you a carpenter?" without checking whether the specific job needs plumbing, electrical, or framing.
+
+V3.5 replaces this with continuous distance derived from **operator-level fluency profiles**. Each agent accumulates a per-operator track record — how many payloads requiring each GPSL operator they've solved, and at what quality. The distance between an agent and a payload is the average mismatch across the operators that specific payload requires:
+
+```
+D_{i,p} = (1/|Ops(p)|) × Σ_{op ∈ Ops(p)} max(0, 3 - fluency_score(i, op) × 3)
+
+where fluency_score(count, quality_sum) = (quality_sum / count) × log(1 + count) / log(11)
+      capped at 1.0
+```
+
+An agent fluent in every operator the payload requires has D ≈ 0. An agent fluent in none has D ≈ 3. The operator vocabulary comes from GPSL v2.2 (→, ⊗, ::, ⥀, ⦸, ⤳, □, ◇, |ψ⟩, Û(t)) and grows as the spec evolves — naturally preventing any agent from monopolizing a growing skill space.
+
+**Phase 2 empirical validation (2026-04-13):** A 2×2 factorial experiment ({categorical D, continuous D} × {linear accrual, sublinear+rebase}) across 20 GPSL-encoded Spatial payloads demonstrated that operator-level continuous D produces **33.5% routing divergence** from categorical D under the reformed mass distribution, with a **+0.053 quality improvement**. Agents developed differentiated operator-level specialization profiles without any role assignment — 6 of 7 active agents had unique top-3 operator specializations. Full methodology: `docs/PHASE2_PROGRESS_REPORT_2026-04-13.md`.
 
 ### 2.3 The Plasticity Matrix & LLM Implementation
 
@@ -856,7 +879,13 @@ M_gov: untouched (never slashed)
 
 Protocol specification V3.5 with Dual-Mass Architecture and GPSL integration. Five Solidity smart contracts deployed on Base Sepolia (SoulboundMass, EscrowCore, AutoToken, Treasury, Timelock) with 160 Foundry tests passing (100%). First Metabolic Payload successfully solved on-chain (Tier 1 verification, USDC payout, Mass accrual). Node Client prototype with Web3 chain adapter. Full simulation framework published (10 LLM agents, 5 routing algorithms, V3.5 reform stack).
 
-**Phase 1 Empirical Validation (2026-04-09):** 4-treatment graduated stack + 3-seed variance check validated the V3.5 reform: aggregate Gini reduced by 49.5% (0.627 → 0.317) with zero quality cost (0.820 both arms), deterministic participation floor of 6/10 agents, rebase boundary stable. Background decay empirically redundant (ships with δ=0). Full report: `docs/PHASE1_PROGRESS_REPORT_2026-04-09.md`. Simulation code and configs are open source.
+**Phase 1 Empirical Validation (2026-04-09):** 4-treatment graduated stack + 3-seed variance check validated the V3.5 reform: aggregate Gini reduced by 49.5% (0.627 → 0.317) with zero quality cost (0.820 both arms), deterministic participation floor of 6/10 agents, rebase boundary stable. Background decay empirically redundant (ships with δ=0). Full report: `docs/PHASE1_PROGRESS_REPORT_2026-04-09.md`.
+
+**Phase 2.5 Multi-Agent Collaboration (2026-04-12):** 7 collaboration patterns tested across 10 composite payloads. Structured handoff (C6) validated as optimal pattern (0.745 mean). LLM-generated fusion, adversarial synthesis, and peer review all empirically falsified. Whitepaper §7 revised accordingly. Full report: `docs/PHASE25_PROGRESS_REPORT_2026-04-12.md`.
+
+**Phase 2 GPSL Cipher Encoding (2026-04-13):** 2×2 factorial validated operator-level continuous distance. 33.5% routing divergence with +0.053 quality improvement under reformed mass distribution. Agents develop differentiated operator specializations without role assignment. Full V3.5+GPSL routing stack validated end-to-end. Full report: `docs/PHASE2_PROGRESS_REPORT_2026-04-13.md`.
+
+Simulation code and configs are open source.
 
 **Deployed Contract Addresses (Base Sepolia):**
 

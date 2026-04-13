@@ -184,3 +184,77 @@ gravdic.com
 | 4 | Post 3 | 03-capillary-cluster.png | Collaboration (graphic version) |
 
 Two posts per week. Alternate between explainer (how it works) and data (what we proved). Every post ends with gravdic.com.
+
+---
+
+## Post 7 — Phase 2 Result: Operator-Level Routing (NEW)
+**Graphic:** create a new data visualization or use banner
+
+```
+We just proved that AI agents can be routed by specific skills, not just broad categories.
+
+The problem: saying "this agent is good at Spatial tasks" is like saying "this person does construction." It doesn't tell you if they can do plumbing, electrical, or framing.
+
+The fix: we track which specific operations each agent has proven competence in. Not "Spatial" but "scanning (directional traversal), boundary detection, flow reasoning."
+
+We encoded 20 tasks in GPSL notation -- a formal grammar for structural topology -- and ran a 2x2 experiment:
+
+Old matching + old reputation: the baseline. One agent monopolizes.
+Old matching + new reputation: monopoly breaks but matching is crude.
+New matching + old reputation: matching improves but monopoly swamps it.
+New matching + new reputation: 33.5% of tasks get routed to a DIFFERENT agent. Quality goes UP.
+
+You need both fixes together. Breaking the monopoly alone doesn't improve matching. Better matching alone can't overcome the monopoly. Together: one in three tasks finds a better-fit agent.
+
+The agents weren't assigned specializations. They developed them by doing the work. 6 of 7 active agents ended up with unique skill profiles -- because the physics rewards competence.
+
+The full empirical loop is closed:
+- Phase 0-A: "skill-based routing can't work under monopoly" (falsified)
+- Phase 1: "break the monopoly" (validated, 49.5% Gini reduction)
+- Phase 2: "now skill-based routing works" (validated, 33.5% divergence)
+
+All code open source.
+
+github.com/svenschlegel/gravdic
+gravdic.com
+```
+
+---
+
+## Post 8 — The Full Loop (narrative, NEW)
+**Graphic:** none needed, or create a timeline graphic
+
+```
+Four experiments. One protocol. Here is what we proved.
+
+Phase 0-A: we tested whether tracking agent skills could improve task routing. Result: impossible. The top agent had 5000x the reputation of everyone else. No skill signal can overcome that.
+
+Phase 1: we redesigned the reputation system. Split it into two: permanent recognition (Governance Mass) and cyclical routing fuel (Routing Mass). Added diminishing returns and seasonal resets. Result: monopoly collapsed from 5000:1 to 15:1. Quality unchanged. Participation nearly doubled.
+
+Phase 2.5: we tested how agents should collaborate on complex tasks. Tested 7 patterns. Result: a focused "handoff memo" between sequential specialists beats every other approach. LLM-generated fusion and adversarial critique both make things worse.
+
+Phase 2: we tested skill-based routing under the new reputation system. Tracked which specific operations each agent can do, not just their category. Result: 33.5% of tasks get routed to a better-fit agent. Quality improves.
+
+Each experiment built on the last. Each falsified or validated a specific claim. The protocol adapted based on what the data said, not what we hoped.
+
+This is what "governed by physics" means. You test. You measure. You adapt. The protocol isn't a theory -- it's an empirical result.
+
+gravdic.com
+```
+
+---
+
+## Updated posting schedule
+
+| Week | Post | Angle |
+|---|---|---|
+| 1 | Already posted | Pinned (Phase 1 result) |
+| 1 | Already posted | Capillary Clusters (collaboration) |
+| 2 | Post 1 (routing formula) | How routing works |
+| 2 | Post 5 (economic loop) | Tasks in, USDC out |
+| 3 | Post 2 (dual-mass) | Why monopolies break |
+| 3 | Post 4 (friction types) | How work is classified |
+| 4 | Post 7 (Phase 2 result) | Skill-based routing validated |
+| 4 | Post 3 (Capillary Cluster graphic) | Collaboration mechanics |
+| 5 | Post 8 (the full loop) | The narrative: 4 experiments, one protocol |
+| 5 | Post 6 (Phase 1 data) | Deep dive on monopoly collapse |
