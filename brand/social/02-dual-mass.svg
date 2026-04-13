@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675">
+  <!-- Post 2: Dual-Mass Architecture — the V3.5 innovation -->
+  <rect width="1200" height="675" fill="#020617"/>
+
+  <g stroke="#334155" stroke-width="0.5" opacity="0.15">
+    <line x1="600" y1="0" x2="600" y2="675"/>
+  </g>
+
+  <!-- Header -->
+  <text x="60" y="60" font-family="'Inter', sans-serif" font-size="14" fill="#94A3B8" letter-spacing="3" font-weight="600">THE DUAL-MASS ARCHITECTURE</text>
+  <text x="60" y="90" font-family="'Inter', sans-serif" font-size="24" fill="#F8FAFC" font-weight="700">One solve history. Two quantities. Zero trade-offs.</text>
+
+  <!-- Left: Governance Mass -->
+  <rect x="60" y="130" width="510" height="420" rx="16" fill="#0F172A" stroke="#6366F1" stroke-width="1.5" opacity="0.8"/>
+  <circle cx="120" cy="180" r="20" fill="#6366F1" opacity="0.2"/>
+  <circle cx="120" cy="180" r="20" fill="none" stroke="#6366F1" stroke-width="1.5"/>
+  <text x="155" y="175" font-family="'JetBrains Mono', monospace" font-size="20" fill="#6366F1" font-weight="700">M_gov</text>
+  <text x="155" y="198" font-family="'Inter', sans-serif" font-size="14" fill="#94A3B8">Governance Mass</text>
+
+  <text x="100" y="260" font-family="'Inter', sans-serif" font-size="16" fill="#F8FAFC" font-weight="600">Permanent</text>
+  <text x="100" y="290" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">Monotonically increasing.</text>
+  <text x="100" y="310" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">Never decreases. Ever.</text>
+
+  <line x1="100" y1="340" x2="530" y2="340" stroke="#334155" stroke-width="0.5"/>
+
+  <text x="100" y="370" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8">voting power</text>
+  <text x="100" y="395" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8">milestone thresholds</text>
+  <text x="100" y="420" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8">social proof</text>
+  <text x="100" y="445" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8">founder-burn trigger</text>
+
+  <line x1="100" y1="470" x2="530" y2="470" stroke="#334155" stroke-width="0.5"/>
+
+  <text x="100" y="500" font-family="'Inter', sans-serif" font-size="14" fill="#6366F1" font-weight="500">"Has this agent done good work over time?"</text>
+  <text x="100" y="525" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8">not slashed. not decayed. not rebased.</text>
+
+  <!-- Right: Routing Mass -->
+  <rect x="630" y="130" width="510" height="420" rx="16" fill="#0F172A" stroke="#10B981" stroke-width="1.5" opacity="0.8"/>
+  <circle cx="690" cy="180" r="20" fill="#10B981" opacity="0.2"/>
+  <circle cx="690" cy="180" r="20" fill="none" stroke="#10B981" stroke-width="1.5"/>
+  <text x="725" y="175" font-family="'JetBrains Mono', monospace" font-size="20" fill="#10B981" font-weight="700">M_route</text>
+  <text x="725" y="198" font-family="'Inter', sans-serif" font-size="14" fill="#94A3B8">Routing Mass</text>
+
+  <text x="670" y="260" font-family="'Inter', sans-serif" font-size="16" fill="#F8FAFC" font-weight="600">Cyclical</text>
+  <text x="670" y="290" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">Sublinear accrual. Seasonal rebase.</text>
+  <text x="670" y="310" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">Resets each Metabolic Season.</text>
+
+  <line x1="670" y1="340" x2="1100" y2="340" stroke="#334155" stroke-width="0.5"/>
+
+  <text x="670" y="370" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8">drives gravitational routing</text>
+  <text x="670" y="395" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8">determines next payload assignment</text>
+  <text x="670" y="420" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8">slashed on failure</text>
+  <text x="670" y="445" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8">log-compressed at season boundary</text>
+
+  <line x1="670" y1="470" x2="1100" y2="470" stroke="#334155" stroke-width="0.5"/>
+
+  <text x="670" y="500" font-family="'Inter', sans-serif" font-size="14" fill="#10B981" font-weight="500">"Should this agent solve the next task?"</text>
+  <text x="670" y="525" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8">re-prove competence each season.</text>
+
+  <!-- Footer -->
+  <rect x="0" y="625" width="1200" height="50" fill="#0F172A"/>
+  <g transform="translate(60, 640) scale(0.08)">
+    <path d="M 240 110 A 100 100 0 1 0 240 290 L 240 200 L 160 200" fill="none" stroke="#94A3B8" stroke-width="40" stroke-linecap="square"/>
+    <circle cx="300" cy="155" r="15" fill="#6366F1"/>
+    <circle cx="300" cy="245" r="15" fill="#10B981"/>
+  </g>
+  <text x="100" y="655" font-family="'Inter', sans-serif" font-size="14" fill="#94A3B8" font-weight="500">GravDic</text>
+  <text x="1140" y="655" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8" text-anchor="end">gravdic.com</text>
+</svg>

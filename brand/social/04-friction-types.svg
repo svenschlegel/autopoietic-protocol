@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675">
+  <!-- Post 4: The Four Friction Types — how GravDic classifies work -->
+  <rect width="1200" height="675" fill="#020617"/>
+
+  <!-- Header -->
+  <text x="60" y="60" font-family="'Inter', sans-serif" font-size="14" fill="#94A3B8" letter-spacing="3" font-weight="600">HOW GRAVDIC CLASSIFIES WORK</text>
+  <text x="60" y="90" font-family="'Inter', sans-serif" font-size="24" fill="#F8FAFC" font-weight="700">Four friction types. One routing formula.</text>
+
+  <!-- 2x2 grid -->
+  <!-- Semantic -->
+  <rect x="60" y="130" width="530" height="210" rx="16" fill="#0F172A" stroke="#6366F1" stroke-width="1"/>
+  <text x="100" y="170" font-family="'JetBrains Mono', monospace" font-size="28" fill="#6366F1" font-weight="700">SEMANTIC</text>
+  <text x="100" y="200" font-family="'Inter', sans-serif" font-size="15" fill="#F8FAFC" font-weight="500">Meaning, classification, ontological reasoning</text>
+  <text x="100" y="230" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">"What does this text mean?"</text>
+  <text x="100" y="250" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">"Classify this document."</text>
+  <text x="100" y="270" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">"Extract the sentiment and intent."</text>
+  <text x="100" y="310" font-family="'JetBrains Mono', monospace" font-size="11" fill="#94A3B8">D = 0.0 for semantic specialists</text>
+
+  <!-- Deterministic -->
+  <rect x="610" y="130" width="530" height="210" rx="16" fill="#0F172A" stroke="#10B981" stroke-width="1"/>
+  <text x="650" y="170" font-family="'JetBrains Mono', monospace" font-size="28" fill="#10B981" font-weight="700">DETERMINISTIC</text>
+  <text x="650" y="200" font-family="'Inter', sans-serif" font-size="15" fill="#F8FAFC" font-weight="500">Computation, exact-match, structured extraction</text>
+  <text x="650" y="230" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">"Compute this sum."</text>
+  <text x="650" y="250" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">"Parse this JSON and return field X."</text>
+  <text x="650" y="270" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">"Transform this schema."</text>
+  <text x="650" y="310" font-family="'JetBrains Mono', monospace" font-size="11" fill="#94A3B8">verified by hash match (Tier 1)</text>
+
+  <!-- Spatial -->
+  <rect x="60" y="360" width="530" height="210" rx="16" fill="#0F172A" stroke="#F8FAFC" stroke-width="1" opacity="0.6"/>
+  <text x="100" y="400" font-family="'JetBrains Mono', monospace" font-size="28" fill="#F8FAFC" font-weight="700" opacity="0.7">SPATIAL</text>
+  <text x="100" y="430" font-family="'Inter', sans-serif" font-size="15" fill="#F8FAFC" font-weight="500">Topology, placement, constraint satisfaction</text>
+  <text x="100" y="460" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">"Place these components optimally."</text>
+  <text x="100" y="480" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">"Map this network topology."</text>
+  <text x="100" y="500" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">"Route around these constraints."</text>
+  <text x="100" y="540" font-family="'JetBrains Mono', monospace" font-size="11" fill="#94A3B8">where GPSL notation is native</text>
+
+  <!-- Temporal -->
+  <rect x="610" y="360" width="530" height="210" rx="16" fill="#0F172A" stroke="#94A3B8" stroke-width="1" opacity="0.5"/>
+  <text x="650" y="400" font-family="'JetBrains Mono', monospace" font-size="28" fill="#94A3B8" font-weight="700">TEMPORAL</text>
+  <text x="650" y="430" font-family="'Inter', sans-serif" font-size="15" fill="#F8FAFC" font-weight="500">Sequencing, causality, time-dependent reasoning</text>
+  <text x="650" y="460" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">"What happens if X before Y?"</text>
+  <text x="650" y="480" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">"Predict the next state."</text>
+  <text x="650" y="500" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8">"Schedule these dependencies."</text>
+  <text x="650" y="540" font-family="'JetBrains Mono', monospace" font-size="11" fill="#94A3B8">drives temporal evolution operators</text>
+
+  <!-- Footer -->
+  <rect x="0" y="625" width="1200" height="50" fill="#0F172A"/>
+  <g transform="translate(60, 640) scale(0.08)">
+    <path d="M 240 110 A 100 100 0 1 0 240 290 L 240 200 L 160 200" fill="none" stroke="#94A3B8" stroke-width="40" stroke-linecap="square"/>
+    <circle cx="300" cy="155" r="15" fill="#6366F1"/>
+    <circle cx="300" cy="245" r="15" fill="#10B981"/>
+  </g>
+  <text x="100" y="655" font-family="'Inter', sans-serif" font-size="14" fill="#94A3B8" font-weight="500">GravDic</text>
+  <text x="1140" y="655" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8" text-anchor="end">gravdic.com</text>
+</svg>

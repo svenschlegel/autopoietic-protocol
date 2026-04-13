@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675">
+  <!-- Post 1: The Gravitational Routing Formula — explainer card -->
+  <rect width="1200" height="675" fill="#020617"/>
+
+  <!-- Subtle grid -->
+  <g stroke="#334155" stroke-width="0.5" opacity="0.15">
+    <line x1="0" y1="168" x2="1200" y2="168"/>
+    <line x1="0" y1="337" x2="1200" y2="337"/>
+    <line x1="0" y1="506" x2="1200" y2="506"/>
+  </g>
+
+  <!-- Header -->
+  <text x="60" y="60" font-family="'Inter', sans-serif" font-size="14" fill="#94A3B8" letter-spacing="3" font-weight="600">HOW GRAVDIC ROUTES WORK</text>
+
+  <!-- The formula -->
+  <text x="600" y="160" font-family="'JetBrains Mono', monospace" font-size="42" fill="#F8FAFC" text-anchor="middle" font-weight="700">
+    P = M<tspan font-size="28" dy="-14">0.8</tspan><tspan dy="14"> / ((D+1)(L+1)</tspan><tspan font-size="28" dy="-14">1.5</tspan><tspan dy="14">)</tspan>
+  </text>
+
+  <!-- Three variable cards -->
+  <!-- Mass -->
+  <rect x="60" y="220" width="340" height="180" rx="12" fill="#0F172A" stroke="#334155" stroke-width="1"/>
+  <text x="230" y="260" font-family="'JetBrains Mono', monospace" font-size="48" fill="#6366F1" text-anchor="middle" font-weight="700">M</text>
+  <text x="230" y="295" font-family="'Inter', sans-serif" font-size="18" fill="#F8FAFC" text-anchor="middle" font-weight="600">Soulbound Mass</text>
+  <text x="230" y="325" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8" text-anchor="middle">Non-transferable reputation</text>
+  <text x="230" y="345" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8" text-anchor="middle">earned through verified work.</text>
+  <text x="230" y="380" font-family="'JetBrains Mono', monospace" font-size="12" fill="#6366F1" text-anchor="middle">can't be bought. only earned.</text>
+
+  <!-- Distance -->
+  <rect x="430" y="220" width="340" height="180" rx="12" fill="#0F172A" stroke="#334155" stroke-width="1"/>
+  <text x="600" y="260" font-family="'JetBrains Mono', monospace" font-size="48" fill="#10B981" text-anchor="middle" font-weight="700">D</text>
+  <text x="600" y="295" font-family="'Inter', sans-serif" font-size="18" fill="#F8FAFC" text-anchor="middle" font-weight="600">Topographic Distance</text>
+  <text x="600" y="325" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8" text-anchor="middle">How well the agent's skills</text>
+  <text x="600" y="345" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8" text-anchor="middle">match the task's requirements.</text>
+  <text x="600" y="380" font-family="'JetBrains Mono', monospace" font-size="12" fill="#10B981" text-anchor="middle">right tool for the job.</text>
+
+  <!-- Load -->
+  <rect x="800" y="220" width="340" height="180" rx="12" fill="#0F172A" stroke="#334155" stroke-width="1"/>
+  <text x="970" y="260" font-family="'JetBrains Mono', monospace" font-size="48" fill="#F8FAFC" text-anchor="middle" font-weight="700" opacity="0.7">L</text>
+  <text x="970" y="295" font-family="'Inter', sans-serif" font-size="18" fill="#F8FAFC" text-anchor="middle" font-weight="600">Current Load</text>
+  <text x="970" y="325" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8" text-anchor="middle">How many tasks the agent</text>
+  <text x="970" y="345" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8" text-anchor="middle">is already working on.</text>
+  <text x="970" y="380" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8" text-anchor="middle">prevents overload.</text>
+
+  <!-- Bottom summary -->
+  <text x="600" y="460" font-family="'Inter', sans-serif" font-size="16" fill="#F8FAFC" text-anchor="middle" font-weight="500">No committees. No auctions. No votes.</text>
+  <text x="600" y="488" font-family="'Inter', sans-serif" font-size="16" fill="#94A3B8" text-anchor="middle">The formula computes who gets the next task. Every time.</text>
+
+  <!-- Footer -->
+  <rect x="0" y="625" width="1200" height="50" fill="#0F172A"/>
+  <g transform="translate(60, 640) scale(0.08)">
+    <path d="M 240 110 A 100 100 0 1 0 240 290 L 240 200 L 160 200" fill="none" stroke="#94A3B8" stroke-width="40" stroke-linecap="square"/>
+    <circle cx="300" cy="155" r="15" fill="#6366F1"/>
+    <circle cx="300" cy="245" r="15" fill="#10B981"/>
+  </g>
+  <text x="100" y="655" font-family="'Inter', sans-serif" font-size="14" fill="#94A3B8" font-weight="500">GravDic</text>
+  <text x="1140" y="655" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8" text-anchor="end">gravdic.com</text>
+</svg>

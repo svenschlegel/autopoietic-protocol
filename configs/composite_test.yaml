@@ -1,0 +1,88 @@
+# Phase 2.5 — Multi-Agent Collaboration Test
+#
+# Tests the collaboration hypothesis: does routing sub-tasks to specialized
+# models and fusing their outputs produce better results than giving the
+# whole task to one generalist?
+#
+# 10 composite payloads × 4 conditions (single, independent, fusion, adversarial)
+# Same agent pool as Phase 1 for direct comparison.
+# Estimated cost: ~$30-40 (C4 adversarial rounds are token-heavy)
+
+experiment:
+  num_agents: 10
+  seed: 42
+  # Not used directly — composite experiment runs its own loop
+  # but the agent pool and protocol constants are read from here
+  num_rounds: 1
+  payloads_per_round: 1
+  routing_algorithms:
+    - composite
+
+agents:
+  default_model: "anthropic/claude-3.5-haiku"
+  judge_model: "anthropic/claude-sonnet-4"
+  initial_mass: 1.0
+  max_load: 3
+  models:
+    - name: "haiku-1"
+      model: "anthropic/claude-3.5-haiku"
+      primary_domain: SEMANTIC
+    - name: "haiku-2"
+      model: "anthropic/claude-3.5-haiku"
+      primary_domain: DETERMINISTIC
+    - name: "gemini-flash-1"
+      model: "google/gemini-2.0-flash-001"
+      primary_domain: DETERMINISTIC
+      secondary_domains: [SPATIAL]
+    - name: "gemini-flash-2"
+      model: "google/gemini-2.0-flash-001"
+      primary_domain: SPATIAL
+    - name: "llama-1"
+      model: "meta-llama/llama-3.1-70b-instruct"
+      primary_domain: SEMANTIC
+      secondary_domains: [TEMPORAL]
+    - name: "llama-2"
+      model: "meta-llama/llama-3.1-70b-instruct"
+      primary_domain: TEMPORAL
+    - name: "gpt4o-mini-1"
+      model: "openai/gpt-4o-mini"
+      primary_domain: DETERMINISTIC
+      secondary_domains: [SEMANTIC]
+    - name: "gpt4o-mini-2"
+      model: "openai/gpt-4o-mini"
+      primary_domain: SPATIAL
+      secondary_domains: [DETERMINISTIC]
+    - name: "mistral-1"
+      model: "mistralai/mistral-large"
+      primary_domain: TEMPORAL
+      secondary_domains: [SEMANTIC]
+    - name: "qwen-1"
+      model: "qwen/qwen-2.5-72b-instruct"
+      primary_domain: SEMANTIC
+      secondary_domains: [DETERMINISTIC]
+
+protocol:
+  alpha: 0.8
+  beta: 1.5
+  slash_rate: 0.05
+  quarantine_threshold: 5
+  sigma_min: 0.1
+  sigma_max: 3.0
+  quality_threshold: 0.5
+  # V3.5 reform active (same as Phase 1 Treatment C)
+  sublinear_accrual: true
+  season_length: 0        # no rebase in a single-round composite test
+  season_rebase_c: 100.0
+  decay_rate: 0.0
+
+# Composite-specific settings
+composite:
+  max_specialist_tokens: 1500    # truncate specialist outputs beyond this
+  conditions: [C1, C2, C3, C4]  # which conditions to run
+
+openrouter:
+  base_url: "https://openrouter.ai/api/v1"
+
+output:
+  dir: "./results/composite_test"
+  plots: false

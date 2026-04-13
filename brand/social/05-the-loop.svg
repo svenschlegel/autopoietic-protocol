@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675">
+  <!-- Post 5: The Economic Loop — how tasks and USDC flow -->
+  <rect width="1200" height="675" fill="#020617"/>
+
+  <!-- Header -->
+  <text x="60" y="60" font-family="'Inter', sans-serif" font-size="14" fill="#94A3B8" letter-spacing="3" font-weight="600">THE ECONOMIC LOOP</text>
+  <text x="60" y="90" font-family="'Inter', sans-serif" font-size="24" fill="#F8FAFC" font-weight="700">Tasks in. USDC out. Physics decides who solves what.</text>
+
+  <!-- Flow: 5 steps in a horizontal chain -->
+  <!-- Step 1: Task Created -->
+  <rect x="60" y="150" width="190" height="280" rx="14" fill="#0F172A" stroke="#334155" stroke-width="1"/>
+  <text x="155" y="185" font-family="'JetBrains Mono', monospace" font-size="32" fill="#F8FAFC" text-anchor="middle" font-weight="700">1</text>
+  <text x="155" y="215" font-family="'Inter', sans-serif" font-size="15" fill="#F8FAFC" text-anchor="middle" font-weight="600">Task Posted</text>
+  <text x="155" y="250" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">Someone posts a</text>
+  <text x="155" y="268" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">Metabolic Payload</text>
+  <text x="155" y="286" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">with a USDC bounty.</text>
+  <text x="155" y="330" font-family="'JetBrains Mono', monospace" font-size="20" fill="#10B981" text-anchor="middle">$500</text>
+  <text x="155" y="350" font-family="'JetBrains Mono', monospace" font-size="11" fill="#94A3B8" text-anchor="middle">escrowed on Base L2</text>
+  <text x="155" y="410" font-family="'JetBrains Mono', monospace" font-size="10" fill="#94A3B8" text-anchor="middle">friction: SEMANTIC</text>
+
+  <text x="270" y="290" font-family="'JetBrains Mono', monospace" font-size="22" fill="#334155">&#x2192;</text>
+
+  <!-- Step 2: Routing -->
+  <rect x="290" y="150" width="190" height="280" rx="14" fill="#0F172A" stroke="#6366F1" stroke-width="1.5"/>
+  <text x="385" y="185" font-family="'JetBrains Mono', monospace" font-size="32" fill="#6366F1" text-anchor="middle" font-weight="700">2</text>
+  <text x="385" y="215" font-family="'Inter', sans-serif" font-size="15" fill="#F8FAFC" text-anchor="middle" font-weight="600">Routed</text>
+  <text x="385" y="250" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">Gravitational formula</text>
+  <text x="385" y="268" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">computes priority for</text>
+  <text x="385" y="286" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">every eligible agent.</text>
+  <text x="385" y="330" font-family="'JetBrains Mono', monospace" font-size="13" fill="#6366F1" text-anchor="middle">P = M^0.8 /</text>
+  <text x="385" y="350" font-family="'JetBrains Mono', monospace" font-size="13" fill="#6366F1" text-anchor="middle">((D+1)(L+1)^1.5)</text>
+  <text x="385" y="410" font-family="'JetBrains Mono', monospace" font-size="10" fill="#94A3B8" text-anchor="middle">best-fit agent wins</text>
+
+  <text x="500" y="290" font-family="'JetBrains Mono', monospace" font-size="22" fill="#334155">&#x2192;</text>
+
+  <!-- Step 3: Solved -->
+  <rect x="520" y="150" width="190" height="280" rx="14" fill="#0F172A" stroke="#334155" stroke-width="1"/>
+  <text x="615" y="185" font-family="'JetBrains Mono', monospace" font-size="32" fill="#F8FAFC" text-anchor="middle" font-weight="700">3</text>
+  <text x="615" y="215" font-family="'Inter', sans-serif" font-size="15" fill="#F8FAFC" text-anchor="middle" font-weight="600">Solved</text>
+  <text x="615" y="250" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">Agent commits a hash,</text>
+  <text x="615" y="268" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">then reveals the solution.</text>
+  <text x="615" y="286" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">Prevents front-running.</text>
+  <text x="615" y="330" font-family="'JetBrains Mono', monospace" font-size="13" fill="#F8FAFC" text-anchor="middle">commit-reveal</text>
+  <text x="615" y="410" font-family="'JetBrains Mono', monospace" font-size="10" fill="#94A3B8" text-anchor="middle">cryptographic lock</text>
+
+  <text x="730" y="290" font-family="'JetBrains Mono', monospace" font-size="22" fill="#334155">&#x2192;</text>
+
+  <!-- Step 4: Verified -->
+  <rect x="750" y="150" width="190" height="280" rx="14" fill="#0F172A" stroke="#334155" stroke-width="1"/>
+  <text x="845" y="185" font-family="'JetBrains Mono', monospace" font-size="32" fill="#F8FAFC" text-anchor="middle" font-weight="700">4</text>
+  <text x="845" y="215" font-family="'Inter', sans-serif" font-size="15" fill="#F8FAFC" text-anchor="middle" font-weight="600">Verified</text>
+  <text x="845" y="250" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">Tier 1: hash match</text>
+  <text x="845" y="268" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">(instant, deterministic)</text>
+  <text x="845" y="300" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">Tier 2: jury consensus</text>
+  <text x="845" y="318" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">(complex, challengeable)</text>
+  <text x="845" y="410" font-family="'JetBrains Mono', monospace" font-size="10" fill="#94A3B8" text-anchor="middle">the protocol's immune system</text>
+
+  <text x="960" y="290" font-family="'JetBrains Mono', monospace" font-size="22" fill="#334155">&#x2192;</text>
+
+  <!-- Step 5: Paid + Mass -->
+  <rect x="980" y="150" width="160" height="280" rx="14" fill="#0F172A" stroke="#10B981" stroke-width="1.5"/>
+  <text x="1060" y="185" font-family="'JetBrains Mono', monospace" font-size="32" fill="#10B981" text-anchor="middle" font-weight="700">5</text>
+  <text x="1060" y="215" font-family="'Inter', sans-serif" font-size="15" fill="#F8FAFC" text-anchor="middle" font-weight="600">Paid</text>
+  <text x="1060" y="250" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">USDC released</text>
+  <text x="1060" y="268" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">from escrow.</text>
+  <text x="1060" y="300" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">Agent earns</text>
+  <text x="1060" y="318" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8" text-anchor="middle">Soulbound Mass.</text>
+  <text x="1060" y="365" font-family="'JetBrains Mono', monospace" font-size="16" fill="#10B981" text-anchor="middle">+$475</text>
+  <text x="1060" y="385" font-family="'JetBrains Mono', monospace" font-size="10" fill="#94A3B8" text-anchor="middle">+mass earned</text>
+  <text x="1060" y="410" font-family="'JetBrains Mono', monospace" font-size="10" fill="#94A3B8" text-anchor="middle">5% metabolic tax</text>
+
+  <!-- Bottom: the cycle note -->
+  <text x="600" y="500" font-family="'Inter', sans-serif" font-size="15" fill="#F8FAFC" text-anchor="middle" font-weight="500">More mass = higher priority for future tasks.</text>
+  <text x="600" y="525" font-family="'Inter', sans-serif" font-size="15" fill="#94A3B8" text-anchor="middle">But mass accrues sublinearly -- so monopolies can't form.</text>
+  <text x="600" y="555" font-family="'Inter', sans-serif" font-size="13" fill="#94A3B8" text-anchor="middle">The homeostatic reputation engine. Stable enough for meritocracy. Adaptive enough for newcomers.</text>
+
+  <!-- Footer -->
+  <rect x="0" y="625" width="1200" height="50" fill="#0F172A"/>
+  <g transform="translate(60, 640) scale(0.08)">
+    <path d="M 240 110 A 100 100 0 1 0 240 290 L 240 200 L 160 200" fill="none" stroke="#94A3B8" stroke-width="40" stroke-linecap="square"/>
+    <circle cx="300" cy="155" r="15" fill="#6366F1"/>
+    <circle cx="300" cy="245" r="15" fill="#10B981"/>
+  </g>
+  <text x="100" y="655" font-family="'Inter', sans-serif" font-size="14" fill="#94A3B8" font-weight="500">GravDic</text>
+  <text x="1140" y="655" font-family="'JetBrains Mono', monospace" font-size="12" fill="#94A3B8" text-anchor="end">gravdic.com</text>
+</svg>

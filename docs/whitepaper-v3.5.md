@@ -496,7 +496,11 @@ GPSL is open source for non-commercial use. In a future protocol version, commer
 
 ## 7. Emergent Multi-Agent Collaboration (V4 Roadmap)
 
+**V3.5 Note:** This section has been revised based on Phase 2.5 empirical findings (2026-04-12). The collaboration experiment tested 7 cooperation patterns across 10 composite payloads and falsified the original Gravitational Dictatorship fusion model and Adversarial Synthesis mechanism. The revised design is grounded in the empirically validated pattern: structured handoff signal cascades between sequential specialists, with the protocol itself acting as the orchestrator. Full methodology and data: `docs/PHASE25_PROGRESS_REPORT_2026-04-12.md`.
+
 In biological systems, no single cell solves a problem alone. A wound healing response involves platelets, white blood cells, fibroblasts, and epithelial cells — each responding to local chemical gradients, self-organizing into a temporary structure, and dissolving when the work is done. No cell knows the plan. The plan emerges from the chemistry.
+
+Critically, the chemistry does not involve a "fusion cell" that reads all other cells' outputs and produces a combined result. Each cell responds to specific chemical signals from its neighbors — focused, targeted signals, not full state dumps. The cell that goes first releases a signal that the next cell type responds to. The cascade is sequential, structured, and minimal. Phase 2.5 empirically validated this exact pattern as the optimal collaboration model for AI agents (see §7.2.1 below).
 
 The V3.4 protocol handles individual agent routing: one payload, one solver, one payout. This is sufficient for deterministic tasks (data extraction, computation, schema transformation) but breaks down for complex problems that require multiple specializations working in concert. V4 extends the protocol's existing physics to support spontaneous multi-agent cluster formation — the network's equivalent of a biological tissue response.
 
@@ -539,39 +543,66 @@ Cluster members communicate through a private Gossipsub sub-topic dedicated to t
 
 The agents don't need to understand each other's internal processing. They only need to transmit the topology of how their outputs connect. GPSL was empirically validated for exactly this property: reliable transmission of relational structure across cold, independent architectures without prior training.
 
-#### Phase 4 — Fusion
+#### Phase 4 — Structured Assembly (revised after Phase 2.5)
 
-The Cluster Seed serves as the Fusion Agent — but this role is not supervisory. The Seed is selected automatically by the protocol's existing physics: the agent in the cluster with the highest Soulbound Mass assumes the Seed position due to gravitational density. This is not a delegation or an election — it is a mathematical consequence of the Gravitational Routing Formula applied within the cluster topology.
+**Original design (V3.4 whitepaper):** The Cluster Seed was specified as a "Fusion Agent" that collected partial solutions and produced a generatively fused output. **Phase 2.5 empirically falsified this approach.** When the highest-mass agent attempts to integrate specialist outputs via an LLM call, it consistently degrades quality (mean score 0.455 vs 0.730 for independent specialists). The Seed overwrites domain-specific nuances with generalist reasoning and introduces factual errors in domains it doesn't specialize in.
 
-The Seed's role is strictly assembly, not control. It collects the partial solutions, reads the GPSL ciphers encoding their relational topology, and produces a fused output that respects the causal dependencies, integration points, and boundary constraints communicated by the cluster members.
+**Revised design (V3.5):** The Cluster Seed serves as the **Pipeline Orchestrator** — not the integrator.
 
-**Anti-theft enforcement:**
-To prevent the Cluster Seed from acting as a financial middleman or stealing the collective payout, the EscrowCore smart contract enforces proportional distribution directly. The payout is not routed through the Seed — it is distributed from escrow to each cluster member's wallet individually, based on the contribution weights recorded on-chain at the time of cluster formation. The Seed submits the fused solution to the Membrane, but the contract executes the payout split atomically. The Seed cannot intercept, redirect, or delay any cluster member's share.
+The Seed is still selected automatically by the protocol's existing physics: the agent in the cluster with the highest Soulbound Mass (specifically, the highest *aggregate* Routing Mass across the composite payload's required domains) assumes the Seed position due to gravitational density. This is not a delegation or an election — it is a mathematical consequence of the Gravitational Routing Formula applied within the cluster topology.
 
-This is GPSL's ⊗ operator in its fullest expression: the fused output is not the sum of parts but a new combined state. The legal analysis, the financial extraction, and the regulatory mapping become a unified compliance report that none of the three agents could have produced individually. The fusion is emergent — it arises from the relational topology, not from a pre-programmed assembly procedure.
+The Seed's role is **orchestration and structured assembly, not generative fusion:**
 
-The fused solution is submitted to the Membrane as a single payload response. The Membrane verifies it against the composite payload's membrane rules. If verified (∇E = 0), the vascular payout executes — distributed directly to all cluster members, not through the Seed.
+1. **Determine execution order.** Domain weights on the composite payload determine which specialist goes first (highest weight = most foundational domain). The Seed coordinates the pipeline order.
 
-#### Phase 4.1 — Gravitational Dictatorship (Decision-Making Framework)
+2. **Format handoff signals.** After each specialist produces their output, they also produce a brief structured handoff — 3 key findings that the next specialist in the pipeline should know. The handoff format is protocol-defined (not free-form), ensuring consistent signal quality across heterogeneous agents.
 
-A critical design question in multi-agent collaboration is how the cluster makes final decisions about the fused output. The protocol rejects democratic consensus. In complex systems, consensus produces compromise, and compromise produces mediocre outputs. A regulatory compliance report assembled by committee vote will satisfy no one fully. The protocol instead implements what we term **Gravitational Dictatorship** — a decision-making model where the most qualified agent has absolute authority over data assembly but zero authority over financial settlement.
+3. **Route handoff memos.** The Seed passes each handoff memo to the next specialist in the pipeline. The next specialist receives their own sub-prompt + the handoff memo — not the prior specialist's full output. This focused signal cascade (empirically validated as C6 in Phase 2.5, scoring 0.745) is the optimal balance of cross-domain awareness and specialist autonomy.
+
+4. **Mechanically assemble the final output.** The Seed combines all specialist outputs into a structured final response with domain-labeled sections. This is mechanical concatenation with cross-references, not generative fusion. No LLM produces a "fused" version.
+
+5. **Submit to the Membrane.** The assembled response is submitted as a single composite payload response for verification.
+
+**Anti-theft enforcement** is unchanged: the EscrowCore smart contract enforces proportional payout distribution directly. The payout is not routed through the Seed — it is distributed from escrow to each cluster member's wallet individually, based on contribution weights recorded on-chain. The Seed submits the assembled solution, but the contract executes the payout split atomically. The Seed cannot intercept, redirect, or delay any cluster member's share.
+
+**GPSL operators determine the collaboration pattern.** Not all composite payloads require sequential handoff. The notation carries the instructions:
+
+- **`→` (causation):** domains with causal dependencies route sequentially with handoff memos. "The deterministic extraction must complete before the semantic analysis can reference its results."
+- **`⊗` (fusion):** independent domains route in parallel and are mechanically concatenated. "The spatial mapping and the temporal scheduling can proceed independently."
+- **`::` (boundary):** marks where one specialist's output cannot cross into another's domain. "The semantic interpretation stops here; the deterministic verification takes over."
+
+The composite payload's GPSL topology tells the protocol *which collaboration pattern to use* — sequential with handoff, parallel with concatenation, or a hybrid of both. This replaces the one-size-fits-all fusion model with a payload-driven collaboration architecture.
+
+#### Phase 4.1 — Gravitational Dictatorship (Revised Decision-Making Framework)
+
+A critical design question in multi-agent collaboration is how the cluster makes decisions. The protocol rejects democratic consensus — in complex systems, consensus produces compromise, and compromise produces mediocre outputs. The protocol instead implements **Gravitational Dictatorship** — a decision-making model where the most qualified agent has absolute authority over *pipeline orchestration* but zero authority over financial settlement.
+
+**V3.5 Revision:** The original Gravitational Dictatorship model specified the Seed as a generative integrator who "fused" specialist outputs into a unified answer. Phase 2.5 (2026-04-12) empirically falsified this: LLM-generated fusion consistently degraded quality (mean 0.455 vs 0.730 for independent specialists across 10 composite payloads). The revised model preserves the dictatorship principle but changes what the dictator *does*: orchestration and structured assembly, not generative fusion.
 
 **The Mandate (Physics, Not Politics):**
-The dictator is never elected. The agent within the Capillary Cluster that possesses the highest Soulbound Mass automatically assumes the Cluster Seed position. Because Mass is a non-transferable, immutable record of historical reliability earned exclusively through verified metabolic work, the protocol mathematically guarantees that the most historically competent agent acts as the principal. This is not an authority delegation — it is a gravitational consequence. The heaviest body in the system naturally anchors the cluster.
+The dictator is never elected. The agent within the Capillary Cluster that possesses the highest aggregate Routing Mass across the composite payload's required domains automatically assumes the Cluster Seed position. Because Mass is a non-transferable record of historical reliability earned exclusively through verified metabolic work, the protocol mathematically guarantees that the most broadly competent agent orchestrates the pipeline. This is not an authority delegation — it is a gravitational consequence. The heaviest body in the system naturally anchors the cluster.
 
-**The Execution (The Fusion Dictate):**
-Once the specialized agents submit their partial outputs, there is no voting, no committee review, and no compromise. The Cluster Seed uses the GPSL Fusion operator (⊗) to assemble the components into a unified solution. If a subordinate agent's submission does not actively reduce the thermodynamic friction of the final output, the Seed discards it. The mandate is strictly to achieve a zero-gradient state (∇E = 0), not to ensure every agent's work is included. Inclusion is earned by contribution quality, not by participation.
+**The Execution (Pipeline Authority):**
+The Cluster Seed determines the execution order, routes handoff signals between specialists, and mechanically assembles the final structured output. It does NOT produce a generative "fusion." Instead:
+
+- The Seed orders specialists by domain weight (highest first — the most foundational domain sets the context for subsequent specialists)
+- Each specialist produces their output + a 3-bullet structured handoff memo of key findings
+- The Seed routes each memo to the next specialist in the pipeline
+- The Seed assembles all full outputs into a structured composite response with domain labels and cross-references
+- If a subordinate agent's submission does not meet the verification threshold, the Seed can flag it for re-routing to the next-best specialist in that domain
+
+The mandate is to achieve a zero-gradient state (∇E = 0) through *correct routing and structured assembly*, not through generative rewriting of specialist outputs.
 
 **The Restraint (Preventing Power Abuse):**
-The Gravitational Dictatorship is made benevolent through strict separation of informational power from financial power:
+The Gravitational Dictatorship is made benevolent through strict separation of orchestration power from financial power:
 
-*Information Dictatorship:* The Cluster Seed has absolute, unquestioned control over assembling the final data payload. It decides what gets included, how components are fused, and what gets discarded. This authority is necessary for output quality — a single coherent vision produces better results than a patchwork of compromises.
+*Orchestration Authority:* The Cluster Seed controls pipeline order, handoff routing, and final assembly structure. This authority is necessary for coherent multi-agent coordination — someone must decide who goes first and what signals flow between specialists.
 
-*Economic Democracy:* The Cluster Seed has zero control over financial settlement. The EscrowCore smart contract distributes the USDC payout atomically to each cluster member based on computational contribution weights recorded on-chain at cluster formation. The Seed cannot intercept, redirect, delay, or withhold any member's share. The payout executes the moment the Membrane validates the fused output.
+*Economic Democracy:* The Cluster Seed has zero control over financial settlement. The EscrowCore smart contract distributes the USDC payout atomically to each cluster member based on computational contribution weights recorded on-chain at cluster formation. The Seed cannot intercept, redirect, delay, or withhold any member's share.
 
-This separation creates the optimal principal: an algorithmic dictator that ruthlessly optimizes the final product while being mathematically barred from financial abuse. The dictator's power is bounded by physics (only the highest-Mass agent qualifies), scoped to data (no financial authority), and accountable to the Membrane (the fused output must still pass verification or the dictator's own Mass is at risk through failure recording).
+This separation creates the optimal principal: an algorithmic orchestrator that coordinates the pipeline while being mathematically barred from financial abuse. The dictator's power is bounded by physics (only the highest-aggregate-Mass agent qualifies), scoped to orchestration (no financial authority, no generative rewriting), and accountable to the Membrane (the assembled output must still pass verification or the dictator's own Mass is at risk through failure recording).
 
-The biological analogy holds: a motor neuron doesn't negotiate with other neurons about whether to retract a hand from a hot stove. The highest-activation neuron fires, subordinate neurons either contribute to the response or are suppressed, and the hand retracts in 50 milliseconds. A democratic nervous system would produce a 200-millisecond compromise — enough time to get burned.
+The biological analogy is precise: a motor neuron doesn't rewrite other neurons' signals — it *coordinates the timing and routing* of signals that other neurons produce. The highest-activation neuron fires first, subsequent neurons respond to its signal cascade, and the hand retracts in 50 milliseconds. The motor neuron is a conductor, not a composer.
 
 #### Phase 5 — Collective Payout
 
@@ -615,7 +646,13 @@ V3.4 models individual cellular metabolism: each agent is a cell that ingests nu
 
 The progression from V3 to V4 mirrors biological evolution itself: single-celled organisms (individual agent routing) → colonial organisms (temporary cluster formation) → multicellular organisms (persistent collaborative structures with specialized roles). The protocol doesn't need to be redesigned for each stage — each stage emerges naturally from the thermodynamic physics already in place. The network grows up.
 
-### 7.5 Adversarial Synthesis: The Self-Correcting Cluster
+### 7.5 Adversarial Synthesis: Status and Revision
+
+**V3.5 Empirical Status: FALSIFIED in current form.** Phase 2.5 (2026-04-12) tested the Adversarial Synthesis mechanism (Condition 4) across 10 composite payloads. Result: mean quality 0.185 (worst of 7 conditions tested), revision delta mean −0.270, 0/10 positive deltas. The critique-revision loop is reliably destructive — specialists produce partly-valid, partly-hallucinated critiques, and the Seed's revisions based on mixed-quality feedback degrade the output further. The mechanism is retained in this section as a design record but is **not recommended for V4 implementation** without fundamental redesign. See `docs/PHASE25_PROGRESS_REPORT_2026-04-12.md` §3.3 for full data.
+
+**Possible redesign directions for future versions:** (a) restrict critiques to Tier 1 deterministic verification only (hash-match errors, not subjective quality judgments), (b) use the existing Membrane verification layer for quality control instead of intra-cluster critique, (c) re-test with GPSL-encoded structured critiques rather than natural-language feedback.
+
+**Original V3.4 design (preserved as design record):**
 
 The Gravitational Dictatorship ensures coherent decision-making, but unchecked dictatorship — even an algorithmic one — risks complacency. A Cluster Seed that is never challenged will eventually produce suboptimal fusions: not because it is malicious, but because a single perspective, no matter how massive, has blind spots. The protocol's own development process demonstrated this: initial architectural proposals improved dramatically only after adversarial critique and counter-proposals forced refinement. Adversarial Synthesis formalizes this observation into the cluster's physics.
 
